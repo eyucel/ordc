@@ -98,12 +98,15 @@ for i in range(4, w_periods):
 
     # capacity ratio calculation
     cap_ratio = installed_cap[i + 2] / (fc_load[i + 3] * target_resv)
+    price_cap[i + 3] = 2*fixed_cost - eas_allowance if cap_ratio < 1 else 0
+    cap_add[i + 3] = max(0, min(fc_load[i + 3] * target_resv - installed_cap[i + 2], new_cap[i + 3]))
+    installed_cap[i + 3] = installed_cap[i + 2] + cap_add[i + 3]
 
     # hacked equilibrium calculation
-    cap_add[i + 3] = max(0, min(fc_load[i + 3] * target_resv - installed_cap[i + 2], new_cap[i + 3]))
-
-    installed_cap[i + 3] = installed_cap[i + 2] + cap_add[i + 3]
-    price_cap[i + 3] = 2*fixed_cost-eas_allowance if cap_add[i + 3] > 0 else 0  # todo add demand curve
+    # cap_add[i + 3] = max(0, min(fc_load[i + 3] * target_resv - installed_cap[i + 2], new_cap[i + 3]))
+    #
+    # installed_cap[i + 3] = installed_cap[i + 2] + cap_add[i + 3]
+    # price_cap[i + 3] = 2*fixed_cost-eas_allowance if cap_add[i + 3] > 0 else 0  # todo add demand curve
 
 print(installed_cap)
 print(ac_resv)
@@ -117,12 +120,14 @@ t = np.arange(0, w_periods)
 # plt.legend()
 # plt.show()
 
+print(np.sum(ac_resv[0:w_periods] > target_resv)/w_periods)
 
 fig, (ax0, ax1) = plt.subplots(nrows=2, sharex=True)
 ax0.plot(t, ac_load[0:w_periods], label="actual load")
 ax0.plot(t, wn_load[0:w_periods], label="wn load")
 ax0.plot(t, installed_cap[0:w_periods], label="installed cap")
 ax0.set_title('loads')
+ax0.legend()
 
 ax1.plot(t, ac_resv[0:w_periods])
 ax1.axhline(target_resv,0,1,ls='--',c='k')
