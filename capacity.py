@@ -10,7 +10,7 @@ eas_allowance = 28
 a = 9 / 5
 b = 9 / 5
 c = (np.log(9 / 4) / fixed_cost)
-n_periods = 100
+n_periods = 30
 w_periods = n_periods - 5
 
 def vrrc(installed_cap,fc_load):
@@ -21,7 +21,7 @@ def vrrc(installed_cap,fc_load):
 
 
     IRM = installed_cap / fc_load - 1
-    fpr = (1 + IRM ) * (1 - eford)
+    fpr = (1 + IRM) * (1 - eford)
     rel_req = fc_load * fpr
     p_a = max(cone, mult * (cone - eas_allowance)) / 1-eford
     q_a = rel_req * (1 + IRM - 0.03) / (1 + IRM)
@@ -31,8 +31,18 @@ def vrrc(installed_cap,fc_load):
 
     p_c = 0.2 * (cone - eas_allowance) / (1 - eford)
     q_c = rel_req * (1 + IRM - 0.01) / (1 + IRM)
+    def vrrc_curve(x):
+        if x <= q_a:
+            return p_a
+        if x <= q_b:
+            return (x - q_a) * (p_b-p_a) / (q_b-q_a) + p_a
+        if x <= q_c:
+            return (x - q_b)*(p_c-p_b) / (q_c-q_b) + p_b
+        if x > q_c:
+            return 0
 
-    def 
+    return vrrc_curve, p_c, q_c
+
 
 def gross_margin(reserve):
     return np.exp(21.79737 + reserve * 11.5662)
@@ -118,10 +128,20 @@ for i in range(4, w_periods):
                                                                      weighted_util[i + 3]))
 
     # capacity ratio calculation
-    cap_ratio = installed_cap[i + 2] / (fc_load[i + 3] * target_resv)
-    price_cap[i + 3] = 2*fixed_cost - eas_allowance if cap_ratio < 1 else 0
-    cap_add[i + 3] = max(0, min(fc_load[i + 3] * target_resv - installed_cap[i + 2], new_cap[i + 3]))
-    installed_cap[i + 3] = installed_cap[i + 2] + cap_add[i + 3]
+    z, last_p, last_q = vrrc(installed_cap[i+2], fc_load[i+3])
+    print(last_p, last_q)
+    if new_cap[i+3] + installed_cap[i+2] > last_q:
+        cap_add[i + 3] = last_q - installed_cap[i+2]
+        price_cap[i+3] = last_p
+    else:
+        cap_add[i+3] = new_cap[i+3]
+        price_cap[i+3] = z(cap_add[i+3] + installed_cap[i+2])
+    installed_cap[i+3] = cap_add[i+3] + installed_cap[i+2]
+    # # old capacity ratio calculation
+    # cap_ratio = installed_cap[i + 2] / (fc_load[i + 3] * target_resv)
+    # price_cap[i + 3] = 2*fixed_cost - eas_allowance if cap_ratio < 1 else 0
+    # cap_add[i + 3] = max(0, min(fc_load[i + 3] * target_resv - installed_cap[i + 2], new_cap[i + 3]))
+    # installed_cap[i + 3] = installed_cap[i + 2] + cap_add[i + 3]
 
     # hacked equilibrium calculation
     # cap_add[i + 3] = max(0, min(fc_load[i + 3] * target_resv - installed_cap[i + 2], new_cap[i + 3]))
