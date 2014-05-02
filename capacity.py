@@ -13,6 +13,27 @@ c = (np.log(9 / 4) / fixed_cost)
 n_periods = 100
 w_periods = n_periods - 5
 
+def vrrc(installed_cap,fc_load):
+    cone = 77.4
+    eas_allowance = 28
+    mult = 1.5
+    eford = 0.057
+
+
+    IRM = installed_cap / fc_load - 1
+    fpr = (1 + IRM ) * (1 - eford)
+    rel_req = fc_load * fpr
+    p_a = max(cone, mult * (cone - eas_allowance)) / 1-eford
+    q_a = rel_req * (1 + IRM - 0.03) / (1 + IRM)
+
+    p_b = 1.0 * (cone - eas_allowance) / (1 - eford)
+    q_b = rel_req * (1 + IRM - 0.01) / (1 + IRM)
+
+    p_c = 0.2 * (cone - eas_allowance) / (1 - eford)
+    q_c = rel_req * (1 + IRM - 0.01) / (1 + IRM)
+
+    def 
+
 def gross_margin(reserve):
     return np.exp(21.79737 + reserve * 11.5662)
 
@@ -24,7 +45,7 @@ def utility(profit):
 
 def demand_curve(reserve):
     if reserve < target_resv:
-        return 120
+        return 2 * fixed_cost - eas_allowance
     else:
         return 0
 
@@ -130,7 +151,7 @@ ax0.set_title('loads')
 ax0.legend()
 
 ax1.plot(t, ac_resv[0:w_periods])
-ax1.axhline(target_resv,0,1,ls='--',c='k')
+ax1.axhline(target_resv, 0, 1, ls='--', c='k')
 ax1.set_title('reserves')
 
 plt.show()
