@@ -4,7 +4,7 @@ import numpy as np
 import scipy.stats as stats
 import matplotlib.pyplot as plt
 
-target_resv = 1.1
+target_resv = 1.15
 fixed_cost = 77.4
 eas_allowance = 28
 cone = 77.4
@@ -64,7 +64,7 @@ def utility(profit):
 
 
 def simple_demand_curve(reserve):
-    if reserve*(1-FOR) < fpr:
+    if reserve < fpr:
         return 2 * fixed_cost - eas_allowance
     else:
         return 0
@@ -127,7 +127,7 @@ for i in range(3, w_periods):
 
     z, last_p, last_q = vrrc(fc_load[i+4])
     proj_res = fc_resv[:,i + 3]
-    proj_price = np.array([z(fc_resv[0,i+3]*fc_load[i+4]),simple_demand_curve(fc_resv[1,i+3])])
+    proj_price = np.array([z(fc_resv[0,i+3]*fc_load[i+4]/(1-FOR)),simple_demand_curve(fc_resv[1,i+3])])
     proj_profit = gross_margin(proj_res) + proj_price - fixed_cost
 
     profit_slice = np.zeros((2,8))
@@ -137,7 +137,6 @@ for i in range(3, w_periods):
 
     util_slice = utility(profit_slice)
     weighted_util[:,i + 4] = np.dot(util_slice, weights)
-
     rafp[:,i + 4] = -np.log((a - weighted_util[:,i + 4]) / b / c)
 
     new_cap[0,i + 4] = installed_cap[0,i + 3] * min(beta, max(0, load_growth_avg + (beta - load_growth_avg) *
@@ -154,7 +153,6 @@ for i in range(3, w_periods):
         price_cap[0,i+4] = z(cap_add[0,i+4] + installed_cap[0,i+3])
 
     cap_ratio = installed_cap[1,i + 3] / (fc_load[i + 4] * target_resv)
-    print(cap_ratio)
     cap_add[1,i + 4] = max(0, min(fc_load[i + 4] * target_resv - installed_cap[1,i + 3], new_cap[1,i + 4]))
    # print(max(0, min(fc_load[i + 4] * target_resv - installed_cap[1,i + 3], new_cap[1,i + 4])))
     price_cap[1,i + 4] = 2*fixed_cost - eas_allowance if cap_ratio < 1 else 0
