@@ -53,7 +53,11 @@ def vrrc(fc_load):
     return vrrc_curve, p_c, q_c/(1-FOR)
 
 def gross_margin(reserve):
-    return np.exp(14.88961658 + reserve/fpr * -11.5662)
+    a = reserve/fpr
+
+    return np.exp(8394.647346 - 26004.9271 * a + 26843.18496 * a**2 - 9229.124912*a**3)+10
+
+    # return np.exp(14.88961658 + reserve/fpr * -11.5662)
     # return np.exp(21.79737 + reserve * 11.5662)
 
 
@@ -96,6 +100,7 @@ installed_cap[0, 1:7] = np.array([installed_cap[0,0] * (1 + load_growth_avg) ** 
 installed_cap[1, 1:7] = np.array([installed_cap[1,0] * (1 + load_growth_avg) ** i for i in range(1, 7)])
 profit = np.zeros((2, n_periods))
 weighted_util = np.zeros((2, n_periods))
+profit = np.zeros((2,n_periods))
 rafp = np.zeros((2, n_periods))
 cap_add = np.zeros((2, n_periods))
 new_cap = np.zeros((2, n_periods))
@@ -109,7 +114,7 @@ for i in range(0, 4):
     ac_resv[:,i] = (1 - FOR) * installed_cap[:,i] / ac_load[i]
     fc_resv[:,i] = ac_resv[:,i]
     #fc_resv[i+4] = (1 - FOR) * installed_cap[i+4] / fc_load[i+4]
-
+    profit[:,i] = gross_margin(ac_resv[:,i]) + price_cap[:,i] - fixed_cost
 for i in range(3, w_periods):
     wn_load[i] = wn_load[i - 1] * (1 + load_growth_avg + err_wn.rvs())
     ac_load[i] = wn_load[i] * (1 + err_a.rvs())
@@ -119,7 +124,7 @@ for i in range(3, w_periods):
 
 
     fc_resv[:,i+1:i+4] = (1 - FOR) * installed_cap[:,i+1:i+4] / fc_load[i+1:i+4]
-
+    profit[:,i] = gross_margin(ac_resv[:,i]) + price_cap[:,i] - fixed_cost
     ac_profit = gross_margin(ac_resv[:,i - 3:i+1]) + price_cap[:,i - 3:i+1] - fixed_cost
     fc_profit = gross_margin(fc_resv[:,i+1:i + 4]) + price_cap[:,i+1:i + 4] - fixed_cost
     # print(fc_profit)
@@ -135,29 +140,30 @@ for i in range(3, w_periods):
     profit_slice[:,4:7] = fc_profit
     profit_slice[:,7] = proj_profit
 
+    print(gross_margin(ac_resv[:,i - 3:i+1]))
     util_slice = utility(profit_slice)
     weighted_util[:,i + 4] = np.dot(util_slice, weights)
     rafp[:,i + 4] = -np.log((a - weighted_util[:,i + 4]) / b / c)
 
-    new_cap[0,i + 4] = installed_cap[0,i + 3] * min(beta, max(0, load_growth_avg + (beta - load_growth_avg) *
+    new_cap[0,i + 4] = installed_cap[0, i + 3] * min(beta, max(0, load_growth_avg + (beta - load_growth_avg) *
                                                                      weighted_util[0,i + 4]))
-    new_cap[1,i + 4] = installed_cap[1,i + 3] * min(beta, max(0, load_growth_avg + (beta - load_growth_avg) *
+    new_cap[1,i + 4] = installed_cap[1, i + 3] * min(beta, max(0, load_growth_avg + (beta - load_growth_avg) *
                                                                      weighted_util[1,i + 4]))
     # capacity ratio calculation
 
     if new_cap[0,i+4] + installed_cap[0,i+3] > last_q:
-        cap_add[0,i + 4] = max(0, last_q - installed_cap[0,i+3])
+        # cap_add[0,i + 4] = max(0, last_q - installed_cap[0,i+3])
         price_cap[0,i+4] = last_p
     else:
-        cap_add[0,i+4] = new_cap[0,i+4]
+        # cap_add[0,i+4] = new_cap[0,i+4]
         price_cap[0,i+4] = z(cap_add[0,i+4] + installed_cap[0,i+3])
 
-    cap_ratio = installed_cap[1,i + 3] / (fc_load[i + 4] * target_resv)
-    cap_add[1,i + 4] = max(0, min(fc_load[i + 4] * target_resv - installed_cap[1,i + 3], new_cap[1,i + 4]))
-   # print(max(0, min(fc_load[i + 4] * target_resv - installed_cap[1,i + 3], new_cap[1,i + 4])))
+    cap_ratio = (installed_cap[1,i + 3] + new_cap[1,i+4]) / (fc_load[i + 4] * target_resv)
+    # cap_add[1,i + 4] = max(0, min(fc_load[i + 4] * target_resv - installed_cap[1,i + 3], new_cap[1,i + 4]))
+    # print(max(0, min(fc_load[i + 4] * target_resv - installed_cap[1,i + 3], new_cap[1,i + 4])))
     price_cap[1,i + 4] = 2*fixed_cost - eas_allowance if cap_ratio < 1 else 0
 
-    installed_cap[:,i+4] = cap_add[:,i+4] + installed_cap[:,i+3]
+    installed_cap[:,i+4] = new_cap[:,i+4] + installed_cap[:,i+3]
     # # old capacity ratio calculation
     # cap_ratio = installed_cap[i + 2] / (fc_load[i + 3] * target_resv)
     # price_cap[i + 3] = 2*fixed_cost - eas_allowance if cap_ratio < 1 else 0
@@ -175,7 +181,9 @@ for i in range(3, w_periods):
 # print(cap_add)
 print(price_cap)
 
-t = np.arange(0, w_periods)
+start = 5
+t = np.arange(start, w_periods)
+ts = slice(start,w_periods)
 # plt.plot(t, ac_load[0:w_periods], label="actual load")
 # plt.plot(t, wn_load[0:w_periods], label="wn load")
 # plt.plot(t, installed_cap[0:w_periods], label="installed cap")
@@ -185,32 +193,26 @@ t = np.arange(0, w_periods)
 
 
 fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(nrows=2, ncols=2, sharex=True)
-ax1.plot(t, ac_load[0:w_periods], label="actual load")
-ax1.plot(t, wn_load[0:w_periods], label="wn load")
-ax1.plot(t, (1-FOR)*installed_cap[0,0:w_periods], label="installed cap")
+ax1.plot(t, ac_load[ts], label="actual load")
+ax1.plot(t, wn_load[ts], label="wn load")
+ax1.plot(t, (1-FOR)*installed_cap[0,ts], label="installed cap")
+ax1.plot(t, (1-FOR)*installed_cap[1,ts], label="installed cap2")
 ax1.set_title('loads')
 ax1.legend()
 
-ax2.plot(t, ac_load[0:w_periods], label="actual load")
-ax2.plot(t, wn_load[0:w_periods], label="wn load")
-ax2.plot(t, (1-FOR)*installed_cap[1,0:w_periods], label="installed cap")
-ax2.set_title('loads')
+ax2.plot(t, profit[0,ts], label="profit curve")
+ax2.plot(t, profit[1,ts], label="profit no curve")
 ax2.legend()
 #
-ax3.plot(t, ac_resv[0,0:w_periods])
-ax3.plot(t, fc_resv[0,0:w_periods])
-ax3.axhline(fpr, 0, 1, ls='--', c='k')
+ax3.plot(t, fc_resv[0,ts]/fpr)
+ax3.plot(t, fc_resv[1,ts]/fpr)
+ax3.axhline(fpr/fpr, 0, 1, ls='--', c='k')
 ax3.set_title('reserves')
 
-ax4.plot(t, ac_resv[1,0:w_periods])
-ax4.plot(t, fc_resv[1,0:w_periods])
-ax4.axhline(fpr, 0, 1, ls='--', c='k')
-ax4.set_title('reserves')
-#
-# ax3.plot(t, new_cap[0:w_periods], label="new cap additions")
-# ax3.plot(t, cap_add[0:w_periods], label="cleared capacity")
-# ax3.legend()
-# ax3.set_title('capacity offered,cleared')
-#
-# ax4.plot(t, weighted_util[0:w_periods])
+
+ax4.plot(t, price_cap[0,ts], label="new cap additions")
+ax4.plot(t, price_cap[1,ts], label="cleared capacity")
+ax4.legend()
+ax4.set_title('capacity offered,cleared')
+
 plt.show()
