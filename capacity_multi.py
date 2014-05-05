@@ -115,6 +115,7 @@ new_cap = np.zeros((2, n_periods))
 
 w = 0.5005
 weights = np.array([w* (w ** (7 - i)) for i in range(0, 8)])
+weights = weights/np.sum(weights)
 print(weights)
 for i in range(0, 4):
     wn_load[i + 1] = wn_load[i] * (1 + load_growth_avg + err_wn.rvs())
