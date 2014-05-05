@@ -145,7 +145,7 @@ for i in range(3, w_periods):
     proj_price = np.array([z(fc_resv[0,i+3]*fc_load[i+4]/(1-FOR)), simple_demand_curve(fc_resv[1, i+3])])
     proj_profit = gross_margin(proj_res) + proj_price - fixed_cost
 
-    profit_slice = np.zeros((2,8))
+    profit_slice = np.zeros((2, 8))
     profit_slice[:,0:4] = ac_profit
     profit_slice[:,4:7] = fc_profit
     profit_slice[:,7] = proj_profit
