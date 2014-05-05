@@ -17,10 +17,8 @@ IRM = target_resv - 1
 fpr = (1 + IRM) * (1 - eford)
 
 
-a = 9 / 5
-b = 9 / 5
-c = (np.log(9 / 4) / fixed_cost)
-n_periods = 100
+
+n_periods = 120
 w_periods = n_periods - 5
 
 
@@ -54,8 +52,8 @@ def vrrc(fc_load):
 
 def gross_margin(reserve):
     a = reserve/fpr
-
-    return np.exp(8394.647346 - 26004.9271 * a + 26843.18496 * a**2 - 9229.124912*a**3)+10
+    gm = np.exp(-22.635*a+25.526)+10
+    return gm
 
     # return np.exp(14.88961658 + reserve/fpr * -11.5662)
     # return np.exp(21.79737 + reserve * 11.5662)
@@ -63,6 +61,15 @@ def gross_margin(reserve):
 
 
 def utility(profit):
+    # a = 9 / 5
+    # b = 9 / 5
+    # c = (np.log(9 / 4) / fixed_cost)
+
+
+    a = 49 / 40
+    b = 49 / 40
+    c = 2*(np.log(7 / 3) / fixed_cost)
+
     u = a - b * np.exp(-c * profit)
     return u
 
@@ -104,8 +111,11 @@ profit = np.zeros((2,n_periods))
 rafp = np.zeros((2, n_periods))
 cap_add = np.zeros((2, n_periods))
 new_cap = np.zeros((2, n_periods))
-weights = np.array([.5005 * (.5 ** (7 - i)) for i in range(0, 8)])
 
+
+w = 0.8
+weights = np.array([w* (w ** (7 - i)) for i in range(0, 8)])
+print(weights)
 for i in range(0, 4):
     wn_load[i + 1] = wn_load[i] * (1 + load_growth_avg + err_wn.rvs())
     ac_load[i] = wn_load[i] * (1 + err_a.rvs())
@@ -140,10 +150,10 @@ for i in range(3, w_periods):
     profit_slice[:,4:7] = fc_profit
     profit_slice[:,7] = proj_profit
 
-    print(gross_margin(ac_resv[:,i - 3:i+1]))
     util_slice = utility(profit_slice)
     weighted_util[:,i + 4] = np.dot(util_slice, weights)
-    rafp[:,i + 4] = -np.log((a - weighted_util[:,i + 4]) / b / c)
+
+    # rafp[:,i + 4] = -np.log((a - weighted_util[:,i + 4]) / b / c)
 
     new_cap[0,i + 4] = installed_cap[0, i + 3] * min(beta, max(0, load_growth_avg + (beta - load_growth_avg) *
                                                                      weighted_util[0,i + 4]))
@@ -151,19 +161,20 @@ for i in range(3, w_periods):
                                                                      weighted_util[1,i + 4]))
     # capacity ratio calculation
 
-    if new_cap[0,i+4] + installed_cap[0,i+3] > last_q:
+    installed_cap[:,i+4] = new_cap[:,i+4] + installed_cap[:,i+3]
+    if (1-FOR)*installed_cap[0,i+4] > last_q:
         # cap_add[0,i + 4] = max(0, last_q - installed_cap[0,i+3])
-        price_cap[0,i+4] = last_p
+        price_cap[0,i+4] = 0
     else:
         # cap_add[0,i+4] = new_cap[0,i+4]
-        price_cap[0,i+4] = z(cap_add[0,i+4] + installed_cap[0,i+3])
+        price_cap[0,i+4] = z(installed_cap[0,i+4])
 
-    cap_ratio = (installed_cap[1,i + 3] + new_cap[1,i+4]) / (fc_load[i + 4] * target_resv)
+    cap_ratio = installed_cap[1,i + 4] / (fc_load[i + 4] * target_resv)
     # cap_add[1,i + 4] = max(0, min(fc_load[i + 4] * target_resv - installed_cap[1,i + 3], new_cap[1,i + 4]))
     # print(max(0, min(fc_load[i + 4] * target_resv - installed_cap[1,i + 3], new_cap[1,i + 4])))
-    price_cap[1,i + 4] = 2*fixed_cost - eas_allowance if cap_ratio < 1 else 0
+    price_cap[1,i + 4] = 2*cone - eas_allowance if cap_ratio < 1 else 0
 
-    installed_cap[:,i+4] = new_cap[:,i+4] + installed_cap[:,i+3]
+
     # # old capacity ratio calculation
     # cap_ratio = installed_cap[i + 2] / (fc_load[i + 3] * target_resv)
     # price_cap[i + 3] = 2*fixed_cost - eas_allowance if cap_ratio < 1 else 0
@@ -181,7 +192,7 @@ for i in range(3, w_periods):
 # print(cap_add)
 print(price_cap)
 
-start = 5
+start = 20
 t = np.arange(start, w_periods)
 ts = slice(start,w_periods)
 # plt.plot(t, ac_load[0:w_periods], label="actual load")
