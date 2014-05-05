@@ -107,13 +107,13 @@ installed_cap[0, 1:7] = np.array([installed_cap[0,0] * (1 + load_growth_avg) ** 
 installed_cap[1, 1:7] = np.array([installed_cap[1,0] * (1 + load_growth_avg) ** i for i in range(1, 7)])
 profit = np.zeros((2, n_periods))
 weighted_util = np.zeros((2, n_periods))
-profit = np.zeros((2,n_periods))
+profit = np.zeros((2, n_periods))
 rafp = np.zeros((2, n_periods))
 cap_add = np.zeros((2, n_periods))
 new_cap = np.zeros((2, n_periods))
 
 
-w = 0.8
+w = 0.5005
 weights = np.array([w* (w ** (7 - i)) for i in range(0, 8)])
 print(weights)
 for i in range(0, 4):
@@ -134,15 +134,15 @@ for i in range(3, w_periods):
 
 
     fc_resv[:,i+1:i+4] = (1 - FOR) * installed_cap[:,i+1:i+4] / fc_load[i+1:i+4]
-    profit[:,i] = gross_margin(ac_resv[:,i]) + price_cap[:,i] - fixed_cost
-    ac_profit = gross_margin(ac_resv[:,i - 3:i+1]) + price_cap[:,i - 3:i+1] - fixed_cost
-    fc_profit = gross_margin(fc_resv[:,i+1:i + 4]) + price_cap[:,i+1:i + 4] - fixed_cost
+    profit[:,i] = gross_margin(ac_resv[:, i]) + price_cap[:, i] - fixed_cost
+    ac_profit = gross_margin(ac_resv[:, i - 3:i+1]) + price_cap[:, i - 3:i+1] - fixed_cost
+    fc_profit = gross_margin(fc_resv[:, i+1:i + 4]) + price_cap[:, i+1:i + 4] - fixed_cost
     # print(fc_profit)
     # print(fc_resv[i:i+3])
 
     z, last_p, last_q = vrrc(fc_load[i+4])
-    proj_res = fc_resv[:,i + 3]
-    proj_price = np.array([z(fc_resv[0,i+3]*fc_load[i+4]/(1-FOR)),simple_demand_curve(fc_resv[1,i+3])])
+    proj_res = fc_resv[:, i + 3]
+    proj_price = np.array([z(fc_resv[0,i+3]*fc_load[i+4]/(1-FOR)), simple_demand_curve(fc_resv[1, i+3])])
     proj_profit = gross_margin(proj_res) + proj_price - fixed_cost
 
     profit_slice = np.zeros((2,8))
