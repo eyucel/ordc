@@ -18,7 +18,7 @@ fpr = (1 + IRM) * (1 - eford)
 
 
 
-n_periods = 120
+n_periods = 125
 w_periods = n_periods - 5
 
 
@@ -77,7 +77,8 @@ def utility(profit):
 
 def simple_demand_curve(reserve):
     if reserve < fpr:
-        return 2 * fixed_cost - eas_allowance
+        # return 2 * fixed_cost - eas_allowance
+        return 0
     else:
         return 0
 
@@ -113,7 +114,7 @@ cap_add = np.zeros((2, n_periods))
 new_cap = np.zeros((2, n_periods))
 
 
-w = 0.7
+w = 0.8
 weights = np.array([w * (w ** (7 - i)) for i in range(0, 8)])
 weights = weights/np.sum(weights)
 print(weights)
@@ -136,8 +137,9 @@ for i in range(3, w_periods):
 
     fc_resv[:, i+1:i+4] = (1 - FOR) * installed_cap[:, i+1:i+4] / fc_load[i+1:i+4]
     profit[:, i] = gross_margin(ac_resv[:, i]) + price_cap[:, i] - fixed_cost
-    ac_profit = gross_margin(ac_resv[:, i - 3:i+1]) + price_cap[:, i - 3:i+1] - fixed_cost
-    fc_profit = gross_margin(fc_resv[:, i+1:i + 4]) + price_cap[:, i+1:i + 4] - fixed_cost
+    print( gross_margin(ac_resv[:, i]))
+    ac_profit = gross_margin(ac_resv[:, i-3:i+1]) + price_cap[:, i-3:i+1] - fixed_cost
+    fc_profit = gross_margin(fc_resv[:, i+1:i+4]) + price_cap[:, i+1:i+4] - fixed_cost
     # print(fc_profit)
     # print(fc_resv[i:i+3])
 
@@ -152,6 +154,7 @@ for i in range(3, w_periods):
     profit_slice[:, 7] = proj_profit
 
     util_slice = utility(profit_slice)
+    print(i,util_slice)
     weighted_util[:, i + 4] = np.dot(util_slice, weights)
 
     new_cap[0, i + 4] = installed_cap[0, i + 3] * min(beta, max(0, load_growth_avg + (beta - load_growth_avg) *
@@ -160,18 +163,18 @@ for i in range(3, w_periods):
                                                                 weighted_util[1, i + 4]))
     # capacity ratio calculation
 
-    installed_cap[:, i+4] = new_cap[:, i+4] + installed_cap[:,i+3]
+    installed_cap[:, i+4] = new_cap[:, i+4] + installed_cap[:, i+3]
     if (1-FOR)*installed_cap[0, i+4] > last_q:
         # cap_add[0,i + 4] = max(0, last_q - installed_cap[0,i+3])
         price_cap[0, i+4] = 0
     else:
         # cap_add[0,i+4] = new_cap[0,i+4]
-        price_cap[0, i+4] = z(installed_cap[0,i+4])
+        price_cap[0, i+4] = z(installed_cap[0, i+4])
 
-    cap_ratio = installed_cap[1,i + 4] / (fc_load[i + 4] * target_resv)
+    # cap_ratio = installed_cap[1,i + 4] / (fc_load[i + 4] * target_resv)
     # cap_add[1,i + 4] = max(0, min(fc_load[i + 4] * target_resv - installed_cap[1,i + 3], new_cap[1,i + 4]))
     # print(max(0, min(fc_load[i + 4] * target_resv - installed_cap[1,i + 3], new_cap[1,i + 4])))
-    price_cap[1, i + 4] = 2*cone - eas_allowance if cap_ratio < 1 else 0
+    price_cap[1, i + 4] = simple_demand_curve((1-FOR) * installed_cap[1, i+4]/fc_load[i+4])
 
 
     # # old capacity ratio calculation
@@ -189,7 +192,7 @@ for i in range(3, w_periods):
 # print(installed_cap)
 # print(fc_resv)
 # print(cap_add)
-print(price_cap)
+# print(price_cap)
 
 start = 20
 t = np.arange(start, w_periods)
@@ -210,8 +213,8 @@ ax1.plot(t, (1-FOR)*installed_cap[1, ts], label="unforced cap2")
 ax1.set_title('loads')
 ax1.legend()
 
-ax2.plot(t, profit[0, ts], label="profit curve")
-ax2.plot(t, profit[1, ts], label="profit no curve")
+ax2.plot(t, profit[0, ts] + fixed_cost, label="rev curve")
+ax2.plot(t, profit[1, ts] + fixed_cost, label="rev no curve")
 ax2.legend()
 #
 ax3.plot(t, fc_resv[0, ts]-1)
@@ -219,18 +222,58 @@ ax3.plot(t, fc_resv[1, ts]-1)
 ax3.axhline(fpr-1, 0, 1, ls='--', c='k')
 ax3.set_title('reserves')
 
-
-ax4.plot(t, price_cap[0, ts], label="new cap additions")
-ax4.plot(t, price_cap[1, ts], label="cleared capacity")
+ax4.plot(t, price_cap[1, ts], lw=2, label='No Curve', c='g')
+ax4.plot(t, price_cap[0, ts], lw=3, label='PJM Curve', c='b')
+ax4.legend(loc=0)
 ax4.legend()
 ax4.set_title('capacity offered,cleared')
-
-
+#
+#
 plt.figure()
-plt.plot(t, fc_resv[0, ts]-1, lw=3, label='PJM Curve')
-plt.plot(t, fc_resv[1, ts]-1, lw=2, label='No Curve')
+
+plt.plot(t, fc_resv[1, ts]-1, lw=2, label='No Curve', c='g')
+plt.plot(t, fc_resv[0, ts]-1, lw=3, label='PJM Curve', c='b')
 plt.axhline(fpr-1, 0, 1, ls='--', lw=2, c='k')
 plt.xlabel('Time (years)', fontsize='large')
 plt.ylabel('Unforced Forecast Reserve Margin', fontsize='large')
 plt.legend(loc=0)
+#
+# plt.figure()
+#
+# plt.plot(t, price_cap[1, ts], lw=2, label='No Curve', c='g')
+# plt.plot(t, price_cap[0, ts], lw=3, label='PJM Curve', c='b')
+# plt.xlabel('Time (years)', fontsize='large')
+# plt.ylabel('Price of Capacity ($/MW-year)', fontsize='large')
+# plt.legend(loc=0)
+#
+# plt.figure()
+# plt.plot(t, profit[1, ts] + fixed_cost, lw=2, label='No Curve', c='g')
+# plt.plot(t, profit[0, ts] + fixed_cost, lw=3, label='PJM Curve', c='b')
+# plt.xlabel('Time (years)', fontsize='large')
+# plt.ylabel('Revenues ($/MW-year)', fontsize='large')
+# plt.legend(loc=0)
+
+
+# plt.figure()
+# plt.plot(t, ac_load[ts], label="Actual Load")
+# plt.plot(t, wn_load[ts], label="WN Load", ls = '--')
+# plt.plot(t, (1-FOR)*installed_cap[0, ts], label="unforced cap")
+# plt.plot(t, (1-FOR)*installed_cap[1, ts], label="UCAP PJM")
+#
+# plt.legend(loc=0)
+
+plt.figure()
+plt.plot(t, new_cap[1, ts], lw=2, label='Energy Only', c='g')
+plt.plot(t, new_cap[0, ts], lw=3, label='PJM Curve', c='b')
+plt.xlabel('Time (years)', fontsize='large')
+plt.ylabel('CAP (MW)', fontsize='large')
+plt.legend(loc=0)
+
+plt.figure()
+plt.plot(t, profit[1, ts]+fixed_cost-price_cap[1,ts], lw=2, label='Energy Only', c='g')
+plt.plot(t, profit[0, ts]+fixed_cost-price_cap[1,ts], lw=3, label='PJM Curve', c='b')
+plt.xlabel('Time (years)', fontsize='large')
+plt.ylabel('Gross Margins ($/MW-year)', fontsize='large')
+plt.legend(loc=0)
+
 plt.show()
