@@ -43,10 +43,11 @@ t = np.linspace(.95, 1.15, 200)
 y = [z(x) for x in t]
 
 s = [2*cone-eas_allowance if x < fpr else 0 for x in t]
-plt.plot(t-1, y, lw=3)
-plt.plot(t-1 ,s, lw=3)
-plt.xlabel('Unforced Reserve Margin',fontsize='large')
+plt.plot(t-1, y, lw=3, label='PJM Curve')
+plt.plot(t-1 ,s, lw=3, label='No Demand Curve')
+plt.xlabel('Unforced Reserve Margin', fontsize='large')
 plt.ylabel('UCAP price $/MW-yr',fontsize='large')
 # plt.title('Demand')
+plt.legend()
 plt.xlim([0,.15])
 plt.show()
