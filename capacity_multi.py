@@ -8,7 +8,6 @@ target_resv = 1.15
 fixed_cost = 65.6
 eas_allowance = 28
 cone = 77.4
-eas_allowance = 28
 eford = 0.057
 
 
@@ -23,9 +22,6 @@ w_periods = n_periods - 5
 
 
 def vrrc(fc_load):
-
-
-
     rel_req = fc_load * fpr
 
     p_a = max(cone, 1.5 * (cone - eas_allowance)) / 1-eford
@@ -77,8 +73,8 @@ def utility(profit):
 
 def simple_demand_curve(reserve):
     if reserve < fpr:
-        # return 2 * fixed_cost - eas_allowance
-        return 0
+        return 2 * fixed_cost - eas_allowance
+        # return 0
     else:
         return 0
 
@@ -229,14 +225,14 @@ ax4.legend()
 ax4.set_title('capacity offered,cleared')
 #
 #
-plt.figure()
-
-plt.plot(t, fc_resv[1, ts]-1, lw=2, label='No Curve', c='g')
-plt.plot(t, fc_resv[0, ts]-1, lw=3, label='PJM Curve', c='b')
-plt.axhline(fpr-1, 0, 1, ls='--', lw=2, c='k')
-plt.xlabel('Time (years)', fontsize='large')
-plt.ylabel('Unforced Forecast Reserve Margin', fontsize='large')
-plt.legend(loc=0)
+# plt.figure()
+#
+# plt.plot(t, fc_resv[1, ts]-1, lw=2, label='No Curve', c='g')
+# plt.plot(t, fc_resv[0, ts]-1, lw=3, label='PJM Curve', c='b')
+# plt.axhline(fpr-1, 0, 1, ls='--', lw=2, c='k')
+# plt.xlabel('Time (years)', fontsize='large')
+# plt.ylabel('Unforced Forecast Reserve Margin', fontsize='large')
+# plt.legend(loc=0)
 #
 # plt.figure()
 #
@@ -262,18 +258,18 @@ plt.legend(loc=0)
 #
 # plt.legend(loc=0)
 
-plt.figure()
-plt.plot(t, new_cap[1, ts], lw=2, label='Energy Only', c='g')
-plt.plot(t, new_cap[0, ts], lw=3, label='PJM Curve', c='b')
-plt.xlabel('Time (years)', fontsize='large')
-plt.ylabel('CAP (MW)', fontsize='large')
-plt.legend(loc=0)
-
-plt.figure()
-plt.plot(t, profit[1, ts]+fixed_cost-price_cap[1,ts], lw=2, label='Energy Only', c='g')
-plt.plot(t, profit[0, ts]+fixed_cost-price_cap[1,ts], lw=3, label='PJM Curve', c='b')
-plt.xlabel('Time (years)', fontsize='large')
-plt.ylabel('Gross Margins ($/MW-year)', fontsize='large')
-plt.legend(loc=0)
+# plt.figure()
+# plt.plot(t, new_cap[1, ts], lw=2, label='Energy Only', c='g')
+# plt.plot(t, new_cap[0, ts], lw=3, label='PJM Curve', c='b')
+# plt.xlabel('Time (years)', fontsize='large')
+# plt.ylabel('CAP (MW)', fontsize='large')
+# plt.legend(loc=0)
+#
+# plt.figure()
+# plt.plot(t, profit[1, ts]+fixed_cost-price_cap[1,ts], lw=2, label='Energy Only', c='g')
+# plt.plot(t, profit[0, ts]+fixed_cost-price_cap[1,ts], lw=3, label='PJM Curve', c='b')
+# plt.xlabel('Time (years)', fontsize='large')
+# plt.ylabel('Gross Margins ($/MW-year)', fontsize='large')
+# plt.legend(loc=0)
 
 plt.show()
