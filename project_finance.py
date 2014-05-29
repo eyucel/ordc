@@ -37,7 +37,7 @@ AE_cap = Peak(550, 550, 420, 300, 550)
 dispatch_cap = Peak(400, 150, 150, 150, 400)
 PPA_price = Peak(40, 40, 40, 40, 40)
 PPA_cap = Peak(400, 150, 150, 150, 400)
-ppa_escalator = 0
+PPA_escalator = 0
 PPTA_price = Peak(12, 12, 12, 12, 12)
 PPTA_cap = Peak(550, 550, 550, 550, 550)
 spot_price = Peak(55, 42, 13, 13, 9000)
@@ -103,4 +103,5 @@ print(plant_output)
 total_plant_output = np.sum(plant_output, 1)
 
 
-PPA_revenue =
+PPA_revenue = PPA_price * PPA_cap * (np.outer((1-super_peak_events), np.array(avail_hrs)) + np.outer(super_peak_events, np.array(avail_hrs_sp)))
+print(PPA_revenue)
