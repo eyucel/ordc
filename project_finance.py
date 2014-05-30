@@ -158,4 +158,3 @@ sga_expense = params['sga_expense'] * total_revenue
 macrs_sched = np.array([3.75, 7.22, 6.70, 6.20, 5.80, 5.30, 5.00, 4.52, 4.62, 4.62,
                         4.62, 4.62, 4.62, 4.62, 4.62, 4.62, 4.62, 4.62, 4.62, 4.69])
 
-depreciation 
