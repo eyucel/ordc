@@ -46,12 +46,14 @@ total_plant_output = plant_output * capacity_factor * tothrs
 heat_rate = 7.1
 
 power_price = np.zeros((years, 3))
-pp_esc = 0.02
+pp_esc = 0.03
 power_price[:, 0] = np.array([40.54 * (1+pp_esc)**y for y in range(0, years)])
 power_price[:, 1] = np.array([28.92 * (1+pp_esc)**y for y in range(0, years)])
 power_price[:, 2] = (power_price[:, 0] * on_peak_hrs + power_price[:, 1] * off_peak_hrs) / tothrs
 
-gas_price = np.array([4.39 * (1+pp_esc)**y for y in range(0, years)])
+
+gp_esc = 0.02
+gas_price = np.array([4.39 * (1+gp_esc)**y for y in range(0, years)])
 
 
 merchant_revenue = total_plant_output * power_price[:, 2]
@@ -66,10 +68,11 @@ start_costs = 1.1 * 1e6 * np.ones(years)
 
 energy_gross_margin = merchant_revenue - merchant_fuel_cost - vom_cost - emissions_cost - start_costs
 
+print(energy_gross_margin/1e6)
 
 capacity_price = 0
 
-capacity_revenue = np.ones(years) * capacity_price *plant_output*365
+capacity_revenue = np.ones(years) * capacity_price * plant_output * 365
 ancillary_srvcs_revenue = 1.1 * 1e6 * np.ones(years)
 total_gross_margin = energy_gross_margin + capacity_revenue + ancillary_srvcs_revenue
 total_revenue = ancillary_srvcs_revenue + merchant_revenue
@@ -87,7 +90,7 @@ property_tax = investment * prop_tax_rate
 total_other_costs = fixed_om_cost + sga_cost + property_tax
 
 ebitda = total_gross_margin - total_other_costs
-print(total_gross_margin/1e6)
+print(ebitda/1e6)
 
 depreciation_life = 20
 depreciation = investment / depreciation_life # straight line depreciation
@@ -112,7 +115,7 @@ working_cap = np.zeros(years)
 free_cash_flow = nopat + depreciation + capex + working_cap
 
 ebitdax = 6
-npv_rate = 7.86
+npv_rate = 0.0786
 
 npv_vals = np.zeros(years)
 npv_vals[:] = free_cash_flow
@@ -124,3 +127,4 @@ print(nopat/1e6)
 npv = np.npv(npv_rate, npv_vals)
 print(npv_vals/1e6)
 print(npv/1e6)
+
