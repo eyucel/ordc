@@ -30,11 +30,11 @@ def vrr(q):
     p_a = max(cone, 1.5 * (cone - eas)) / 1-eford
     q_a = relreq * (1 + irm - 0.03) / (1 + irm)
 
-    p_b = .8 * (cone - eas) / (1 - eford)
+    p_b = 1 * (cone - eas) / (1 - eford)
     q_b = relreq * (1 + irm + 0.01) / (1 + irm)
 
-    p_c = 0 * (cone - eas) / (1 - eford)
-    q_c = relreq * (1 + irm + 0.08) / (1 + irm)
+    p_c = 0.2 * (cone - eas) / (1 - eford)
+    q_c = relreq * (1 + irm + 0.03) / (1 + irm)
 
     if q <= q_a:
         return p_a
@@ -61,7 +61,7 @@ delta = max_bid - min_bid
 
 bidrv = stats.uniform(min_bid, delta)
 # bidrv = stats.norm(netcone, .5)
-# bidrv = stats.expon(0,.5)
+bidrv = stats.expon(0,.3)
 #bidrv2 = stats.uniform(min_bid, delta)
 print(bidrv.mean())
 
@@ -116,14 +116,16 @@ for tt in range(0, 80+1):
     simuls = 1000
     own_bids = np.linspace(min_bid, max_bid, steps)
     bidrv = stats.uniform(min_bid, delta)
+    bidrv2 = stats.expon(.3)
     #bidrv2 = stats.uniform(min_bid, delta)
 
-    profit = np.zeros((steps, simuls))
-    cleared_count = np.zeros(steps)
+    profit = np.zeros((2,steps, simuls))
+    cleared_count = np.zeros((2,steps,simuls))
     j = 0
     for own_bid in own_bids:
 
         for s in range(0,simuls):
+
             bids = list(bidrv.rvs(firms-1))
 
             bids.append(own_bid)
@@ -131,6 +133,13 @@ for tt in range(0, 80+1):
             sorted_bid_owners = np.argsort(bids)
             sorted_bids = np.sort(bids)
 
+
+            bids2 = list(bidrv2.rvs(firms-1))
+
+            bids2.append(own_bid)
+
+            sorted_bid_owners2 = np.argsort(bids2)
+            sorted_bids2 = np.sort(bids2)
             # print(sorted_bids)
 
             # print(bids)
@@ -158,18 +167,59 @@ for tt in range(0, 80+1):
             else:
                 pstar = vrr(cleared)
                 if firms-1 in cleared_list:
-                    cleared_count[j] += 1
-                    profit[j,s] = pstar - netcone
+
+                    profit[0,j,s] = pstar - netcone
+
+            cleared_count[0,j,s] = cleared
+            for i in range(0, firms):
+                qx = init_supply + (firms-i)*size
+                #print(qx)
+                if vrr(qx) >= sorted_bids2[-1-i]:
+                    # print(vrr(qx))
+                    # print(qx)
+                    cleared = qx
+
+                    cleared_list = sorted_bid_owners2[0:firms-i]
+                    break
+                cleared = None
+
+            if not cleared:
+                cleared = init_supply
+                cleared_list = None
+                pstar = 0
+
+            else:
+                pstar = vrr(cleared)
+                if firms-1 in cleared_list:
+
+                    profit[1,j,s] = pstar - netcone
+            cleared_count[1,j,s] = cleared
         j+=1
 
-    avg_profit = np.mean(profit, 1)
-
+    avg_profit = np.mean(profit, 2)
+    avg_cleared = np.mean(cleared_count,2)
 
     # print(cleared_count)
     plt.figure()
-    plt.plot(own_bids, avg_profit)
+
+    plt.subplot(2,2,1)
+    plt.plot(own_bids, avg_profit[0,:])
+
     plt.axis([min_bid, max_bid,-.3,.6])
-    plt.title(format(init_supply,'>4'))
+
+
+    plt.subplot(2,2,2)
+    plt.plot(own_bids, avg_profit[1,:])
+    plt.axis([min_bid, max_bid,-.3,.6])
+
+    plt.subplot(2,2,3)
+    plt.plot(own_bids, avg_cleared[0,:])
+    plt.axis([min_bid, max_bid,100,120])
+
+    plt.subplot(2,2,4)
+    plt.plot(own_bids, avg_cleared[1,:])
+    plt.axis([min_bid, max_bid,100,120])
+    plt.suptitle(format(init_supply,'>4'))
     plt.savefig(format(tt,'0=4')+'.png')
     # plt.show()
 
