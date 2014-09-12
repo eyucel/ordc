@@ -33,13 +33,19 @@ if __name__ == "__main__":
     max_bid = 1.5
     delta = max_bid-min_bid
     bidrv = stats.uniform(min_bid, delta)
-    d = bidrv.rvs((100000,2))
+    d = bidrv.rvs((500000, 20))
     # print(simulate(1000,.5))
     last_z = 0
     z = 1
     tol = 1e-3
+    bracket = .2
+    bracket_reduc = .75
 
     while abs(last_z - z) > tol:
         last_z = z
-        z = optimize.fminbound(fixed_func, .8, 1.2, args=(last_z, d), disp=3)
+        lb = (1-bracket) * last_z
+        rb = (1+bracket) * last_z
+        z = optimize.fminbound(fixed_func, lb, rb, args=(last_z, d), disp=3)
+        bracket *= bracket_reduc
     # z = optimize.basinhopping(func,1,disp=True)
+    print(z)

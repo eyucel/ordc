@@ -69,7 +69,7 @@ def simulate(simuls,own_bf=1,opp_bf=1):
 
 def fixed_simulate(draws,own_bf=1,opp_bf=1):
 
-    size = 0.4
+    size = 0.5
 
     min_bid = 0.5
     max_bid = 1.5
