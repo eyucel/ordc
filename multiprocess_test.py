@@ -32,20 +32,25 @@ if __name__ == "__main__":
     min_bid = .5
     max_bid = 1.5
     delta = max_bid-min_bid
+    trials = 2
+    z_hist = np.zeros((trials))
     bidrv = stats.uniform(min_bid, delta)
-    d = bidrv.rvs((500000, 20))
-    # print(simulate(1000,.5))
-    last_z = 0
-    z = 1
-    tol = 1e-3
-    bracket = .2
-    bracket_reduc = .75
+    for t in range(trials):
+        d = bidrv.rvs((10, 20))
+        # print(simulate(1000,.5))
+        last_z = 0
+        z = 1
+        tol = 1e-3
+        bracket = .2
+        bracket_reduc = .75
 
-    while abs(last_z - z) > tol:
-        last_z = z
-        lb = (1-bracket) * last_z
-        rb = (1+bracket) * last_z
-        z = optimize.fminbound(fixed_func, lb, rb, args=(last_z, d), disp=3)
-        bracket *= bracket_reduc
-    # z = optimize.basinhopping(func,1,disp=True)
-    print(z)
+        while abs(last_z - z) > tol:
+            last_z = z
+            lb = (1-bracket) * last_z
+            rb = (1+bracket) * last_z
+            z = optimize.fminbound(fixed_func, lb, rb, args=(last_z, d), disp=3)
+            bracket *= bracket_reduc
+        # z = optimize.basinhopping(func,1,disp=True)
+        z_hist[t] = z
+
+print(z_hist)

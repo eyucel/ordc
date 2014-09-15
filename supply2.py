@@ -84,29 +84,43 @@ def fixed_simulate(draws,own_bf=1,opp_bf=1):
     quantities = np.linspace(0, firms*size, firms, endpoint=False)
     prices = linear_vrr(quantities)
     # print(prices)
-    payout_history = np.zeros(simuls)
-    for s in range(0, simuls):
+    # payout_history = np.zeros(simuls)
+    # for s in range(0, simuls):
+    #
+    #     bids = list(opponent_bid_factor * draws[s,0:firms-1])
+    #     own_cost = draws[s, -1]
+    #     own_bid = optimal_bid_factor * own_cost
+    #     bids.append(own_bid)
+    #
+    #     sorted_bid_owners = np.argsort(bids)
+    #     sorted_bids = np.sort(bids)
+    #
+    #     # get price steps of all offers
+    #
+    #
+    #
+    #     cleared = sorted_bids < prices
+    #     num_cleared = sum(cleared)
+    #
+    #     if (firms-1) in sorted_bid_owners[0:num_cleared]:
+    #         payout = prices[num_cleared-1] - own_cost
+    #     else:
+    #         payout = 0
+    #     payout_history[s] = payout
 
-        bids = list(opponent_bid_factor * draws[s,0:firms-1])
-        own_cost = draws[s, -1]
-        own_bid = optimal_bid_factor * own_cost
-        bids.append(own_bid)
+    bids = opponent_bid_factor*draws
+    bids[:,firms-1] *= own_bf / opp_bf
+    sorted_bid_owners = np.argsort(bids,axis=1)
+    sorted_bids = np.sort(bids,axis=1)
+    cleared = sorted_bids < prices
+    num_cleared = np.sum(cleared,axis=1)
 
-        sorted_bid_owners = np.argsort(bids)
-        sorted_bids = np.sort(bids)
+    ind = np.where(sorted_bid_owners == firms-1)
+    mask = np.where(num_cleared >= ind[1],1,0)
 
-        # get price steps of all offers
+    payout_history = prices[num_cleared] * mask
+    input()
 
-
-
-        cleared = sorted_bids < prices
-        num_cleared = sum(cleared)
-
-        if (firms-1) in sorted_bid_owners[0:num_cleared]:
-            payout = prices[num_cleared-1] - own_cost
-        else:
-            payout = 0
-        payout_history[s] = payout
     exp_payout = np.mean(payout_history)
     return exp_payout
 
