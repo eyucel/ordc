@@ -12,7 +12,7 @@ def task(x):
 def linear_vrr(q):
     m = -1.5/10
     int = 1.5
-    k  = 3
+    k  = 0
     p =  m * q + (m*k+int)
     return np.maximum(p,0)
 
@@ -109,18 +109,27 @@ def fixed_simulate(draws,own_bf=1,opp_bf=1):
     #     payout_history[s] = payout
 
     bids = opponent_bid_factor*draws
-    bids[:,firms-1] *= own_bf / opp_bf
+    bids[:, firms-1] *= own_bf / opp_bf
     sorted_bid_owners = np.argsort(bids,axis=1)
     sorted_bids = np.sort(bids,axis=1)
     cleared = sorted_bids < prices
     num_cleared = np.sum(cleared,axis=1)
 
     ind = np.where(sorted_bid_owners == firms-1)
-    mask = np.where(num_cleared >= ind[1],1,0)
+    mask = np.where(num_cleared > ind[1],1,0)
 
-    payout_history = prices[num_cleared] * mask
-    input()
-
+    payout_history = (prices[num_cleared-1]-draws[:, -1]) * mask
+    # print(np.nonzero(num_cleared))
+    # print(bids)
+    # print(prices)
+    # print(sorted_bid_owners)
+    # print(sorted_bids)
+    # print(cleared)
+    # print(num_cleared)
+    # print(ind)
+    # print(mask)
+    # print(payout_history)
+    # input()
     exp_payout = np.mean(payout_history)
     return exp_payout
 
