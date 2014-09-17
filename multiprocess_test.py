@@ -32,11 +32,11 @@ if __name__ == "__main__":
     min_bid = .5
     max_bid = 1.5
     delta = max_bid-min_bid
-    trials = 1000
+    trials = 3
     z_hist = np.zeros((trials))
     bidrv = stats.uniform(min_bid, delta)
     for t in range(trials):
-        d = bidrv.rvs((1000, 100))
+        d = bidrv.rvs((100000, 100))
         # print(simulate(1000,.5))
         last_z = 0
         z = 1

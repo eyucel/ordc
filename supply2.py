@@ -12,7 +12,7 @@ def task(x):
 def linear_vrr(q):
     m = -1.5/10
     int = 1.5
-    k  = 0
+    k  = 6
     p =  m * q + (m*k+int)
     return np.maximum(p,0)
 
