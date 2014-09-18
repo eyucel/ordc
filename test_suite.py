@@ -28,7 +28,7 @@ def fixed_simulate(draws,own_bf=1,opp_bf=1,k=0,size=0.5):
 
     quantities = np.linspace(0, firms*size, firms, endpoint=False)
     prices = linear_vrr(quantities,k)
-    # print(prices)
+    print(prices)
     # payout_history = np.zeros(simuls)
     # for s in range(0, simuls):
     #
@@ -89,7 +89,7 @@ if __name__=="__main__":
     max_bid = 1.5
     delta = max_bid-min_bid
     trials = 10
-    size = 0.2
+    size = 0.1
     competitors = [2,5,10,50]
     for c in competitors:
         print("c=",c)
