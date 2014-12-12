@@ -28,7 +28,8 @@ def fixed_simulate(draws,own_bf=1,opp_bf=1,k=0,size=0.5):
 
     quantities = np.linspace(0, firms*size, firms, endpoint=False)
     prices = linear_vrr(quantities,k)
-    print(prices)
+    prices = np.array([1,-10])
+    # print(prices)
     # payout_history = np.zeros(simuls)
     # for s in range(0, simuls):
     #
@@ -78,7 +79,7 @@ def fixed_simulate(draws,own_bf=1,opp_bf=1,k=0,size=0.5):
     exp_payout = np.mean(payout_history)
     return exp_payout
 
-def fixed_func(bf,opp_bf,draws,k,size):
+def fixed_func(bf, opp_bf, draws, k, size):
 
     val = -fixed_simulate(draws, own_bf=bf, opp_bf=opp_bf,k=k, size=size)
     return val
