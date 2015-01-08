@@ -25,7 +25,7 @@ def sim(d,p, x_bf, y_bf):
     # print(sorted_bid_owners)
     # input()
     # print(sorted_bid_owners)
-    lowest = sorted_bid_owners[:,0]== n-1
+    lowest = sorted_bid_owners[:,n-1] == 0
 
     p_clearing = own_bid <= p
 
@@ -63,9 +63,10 @@ for c in competitors:
         b = lambda v: np.where(v < (c)/(2*(c+1)), 0, (2*(c+1)*v-(c))/(c+2))
         aa = lambda v: np.where(v<1/3, 0, (6*v-2)/4)
         bb = lambda v: np.where(v<1/3, 1, (6*v-2)/4)
+        cc = lambda v: v
         # print(p)
-        z = sim(d, p, a, a)
-        y = sim(d, p, b, a)
+        z = sim(d, p, a, cc)
+        y = sim(d, p, cc, cc)
         z_hist[t] = z
         y_hist[t] = y
 
