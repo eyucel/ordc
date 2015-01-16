@@ -64,9 +64,10 @@ for c in competitors:
         aa = lambda v: np.where(v<1/3, 0, (6*v-2)/4)
         bb = lambda v: np.where(v<1/3, 1, (6*v-2)/4)
         cc = lambda v: v
+        dd = lambda v: np.where(v < 1/4, 0, 2*v-.5)
         # print(p)
-        z = sim(d, p, a, cc)
-        y = sim(d, p, cc, cc)
+        z = sim(d, p, a, a)
+        y = sim(d, p, dd, a)
         z_hist[t] = z
         y_hist[t] = y
 

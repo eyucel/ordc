@@ -15,7 +15,9 @@
 
 import random
 from numpy.polynomial.polynomial import polyval
+from matplotlib import pyplot as plt
 import numpy as np
+from scipy.spatial import distance
 from deap import base
 from deap import creator
 from deap import tools
@@ -30,32 +32,34 @@ toolbox = base.Toolbox()
 toolbox.register("attr_bool", random.uniform, -10, 10)
 # Structure initializers
 toolbox.register("individual", tools.initRepeat, creator.Individual, 
-    toolbox.attr_bool, 2)
+    toolbox.attr_bool, 3)
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
 k = 100000
-n = 4
+n = 2
 costs = np.random.rand(k, n)
-p = np.random.rand(k)
+p = np.random.rand(k,1)
 
 
 def evalOneMax(individual):
     bids = polyval(costs, individual)
     sorted_bid_owners = np.argsort(bids, axis=1)
-    lowest = sorted_bid_owners[:, n-1] == 0
-    p_clearing = bids[:, n-1] <= p
+    lowest = sorted_bid_owners == 0
+    p_clearing = bids <= p
     mask = lowest*p_clearing
     # print(mask)
 
-    payoff = (p-costs[:, n-1])*mask
-    average = np.mean(payoff)
-    return average,
+    payoff = (p-costs)*mask
+    average = np.mean(payoff,axis=0)
+
+    return sum(average )-sum(distance.pdist(average.reshape(n,1))),
 
 # Operator registering
 toolbox.register("evaluate", evalOneMax)
 toolbox.register("mate", tools.cxTwoPoint)
-toolbox.register("mutate", tools.mutGaussian, mu=0, sigma=1, indpb=0.05)
+toolbox.register("mutate", tools.mutGaussian, mu=0, sigma=2, indpb=0.075)
 toolbox.register("select", tools.selTournament, tournsize=3)
+
 
 def main():
     random.seed(64)
@@ -121,6 +125,8 @@ def main():
     
     best_ind = tools.selBest(pop, 1)[0]
     print("Best individual is %s, %s" % (best_ind, best_ind.fitness.values))
-
+    t = np.linspace(0, 1)
+    plt.plot(t, polyval(t, best_ind))
+    plt.show()
 if __name__ == "__main__":
     main()
