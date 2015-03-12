@@ -1,19 +1,20 @@
 __author__ = 'msbcg452'
 import numpy as np
 np.random.seed()
-k = 4000000
+k = 500000
 n = 4
 # generate random bids
 bids = np.random.rand(k, n)
 # p = np.random.rand(k,2)
 # level 1 price
 ps = .9
-alpha = .1
+alpha = 0
 # other prices
-p = np.array([ps, ps-alpha, ps-2*alpha, ps-3*alpha])
-print(p)
+# p = np.array([ps, ps-alpha, ps-2*alpha, ps-3*alpha])
+p = np.array([ps, ps-alpha, 0, 0])
+# print(p)
 # set player 1 bids to .5
-bids[:,0] = .65
+bids[:, 0] = .75
 # print(bids)
 # return bidder #s in order
 sorted_bid_owners = np.argsort(bids, axis=1)
@@ -33,15 +34,15 @@ ind = np.where(sorted_bid_owners == 0)
 # print(ind)
 
 # if you were in the cheapest bids list, so if you were cheapest, ind was 0
-# and you would clear as long as a price cleared. return which price you received (0, 1, 2 or 3)
+# and you would clear as long as a price cleared. return which price you received (1, 2, 3 or 4)
 mask = np.where(num_clearing > ind[1], num_clearing, 0)
 # print(mask)
 
 # find where you received 2s
 mask2 = mask == 2
-
+maskany = mask > 0
 
 # print(mask2)
-
+print(np.mean(maskany))
 # probability that you won 2s
 print(np.mean(mask2))

@@ -72,6 +72,7 @@ def main():
     # Evaluate the entire population
     fitnesses = list(map(toolbox.evaluate, pop))
     for ind, fit in zip(pop, fitnesses):
+        print(ind)
         ind.fitness.values = fit
     
     print("  Evaluated %i individuals" % len(pop))
