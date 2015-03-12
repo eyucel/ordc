@@ -5,7 +5,9 @@ from matplotlib import pyplot as plt
 from scipy.interpolate import interp1d
 from scipy.special import gamma
 from scipy.special import hyp2f1
-
+from scipy.special import betainc
+from scipy.special import beta
+import mpmath as mp
 
 np.random.seed()
 
@@ -23,24 +25,36 @@ def flex(c,y,n,k):
     # n here is other number of players aka N-1
     # k is # number of winners
     w = y[0]
-    num = (1-c)**j * c**k * (-1+w) * (1-2*c+w) * gamma(1+j) * gamma(1-k+j)**2
-    denom = -2 * (1 - c)**k * c * (c - w) * gamma(k) * gamma(1 - k + j) +  2 * (1 - c)**j * c**(1 + k) * (c - w) * gamma(k) * gamma(1+j) * hyp2f1(1, k - j, 1 + k, c/(-1 + c))
+    # print(c,w,n,k)
+    # num = (1-c)**j * c**k * (-1+w) * (1-2*c+w) * gamma(1+j) * gamma(1-k+j)**2
+    # denom = -2 * (1 - c)**k * c * (c - w) * gamma(k) * gamma(1 - k + j) +  2 * (1 - c)**j * c**(1 + k) * (c - w) * gamma(k) * gamma(1+j) * hyp2f1(1, k - j, 1 + k, c/(-1 + c))
+    # print(c**(k-1))
+    # print(k,j+1-k)
+    # print(betainc(c, k, j+1-k))
+    # print(betainc(np.float64(.999),2.0,1.0))
+    c = mp.mpf(c)
+    w = mp.mpf(w)
+    num = -(1-c)**(j-k) * c**(k-1) * (w-1) * (1-2*c + w)
+    # print(num)
+    denom = 2 * beta(k, j+1-k) * (1 - mp.betainc(k, j+1-k, 0, c, regularized=True)) * (c-w)
+    # print(num)
+    # print(denom)
     return num/denom
 
 
 def solve_opt(n,k):
 
-    t = np.zeros((10000-1))
-    y = np.zeros((10000-1))
+    t = np.zeros((1000-1))
+    y = np.zeros((1000-1))
     w0 = .998
     y0 = [w0]
     t0 = .999
     t1 = .001
-    dt = -0.0001
+    dt = -0.001
     r = ode(flex)
     r.set_f_params(n,k)
     r.set_initial_value(y0, t0)
-    r.set_integrator("dop853",nsteps=10000)
+    r.set_integrator("dop853", nsteps=1000)
     i = 0
     while r.successful() and r.t > t1:
         r.integrate(r.t+dt)
@@ -107,15 +121,15 @@ def simulate(f,n,k):
     mask2 = mask == 2
     maskany = mask > 0
 
-    print(sum(mask)/M)
+    # print(sum(mask)/M)
     print(np.mean(maskany))
     # probability that you won 2s
     print(np.mean(mask2))
 if __name__ == "__main__":
     bf = None
-    n = 3
-    k = 2
+    n = 5
+    k = 3
     bf = solve_opt(n, k)
-    simulate(bf,n,k)
+    simulate(bf, n, k)
 
 
