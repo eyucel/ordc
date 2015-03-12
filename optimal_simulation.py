@@ -5,7 +5,7 @@ from matplotlib import pyplot as plt
 from scipy.interpolate import interp1d
 from scipy.special import gamma
 from scipy.special import hyp2f1
-import scipy as sc
+
 
 np.random.seed()
 
@@ -23,7 +23,7 @@ def flex(c,y,n,k):
     # n here is other number of players aka N-1
     # k is # number of winners
     w = y[0]
-    num = (1-c)**j * c**k * (-1+w) * (1-2*c+w) * sc.factorial(j) * sc.factorial(j-k)**2
+    num = (1-c)**j * c**k * (-1+w) * (1-2*c+w) * gamma(1+j) * gamma(1-k+j)**2
     denom = -2 * (1 - c)**k * c * (c - w) * gamma(k) * gamma(1 - k + j) +  2 * (1 - c)**j * c**(1 + k) * (c - w) * gamma(k) * gamma(1+j) * hyp2f1(1, k - j, 1 + k, c/(-1 + c))
     return num/denom
 
