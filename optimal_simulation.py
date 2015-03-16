@@ -54,7 +54,7 @@ def solve_opt(n,k):
     r = ode(flex)
     r.set_f_params(n,k)
     r.set_initial_value(y0, t0)
-    r.set_integrator("dop853", nsteps=1000)
+    r.set_integrator("dop853", nsteps=5000)
     i = 0
     while r.successful() and r.t > t1:
         r.integrate(r.t+dt)
@@ -65,13 +65,13 @@ def solve_opt(n,k):
     w = np.where(y<0, 0, y)
     plt.plot(t, w)
 
-    plt.show()
-    bid_func = interp1d(t, w)
+    # plt.show()
+    bid_func = interp1d(t[::-1], w[::-1])
     print(min(t),max(t))
     return bid_func
     # print(y[::-1])
-def simulate(f,n,k):
-    M = 10000
+def simulate(ps, f,n,k):
+    M = 50000
 
 
     own_idx = np.random.random_integers(0,n-1,size=(M,1))
@@ -79,13 +79,14 @@ def simulate(f,n,k):
     costs = np.random.rand(M, n)
     costs[costs <.001] = .001
     costs[costs >.998] = .998
+    # print(costs)
     if f is None:
         bids = costs
     else:
         bids = f(costs)
     # p = np.random.rand(k,2)
     # level 1 price
-    ps = .9
+    # ps = .9
     alpha = 0
     # other prices
     # p = np.array([ps, ps-alpha, ps-2*alpha, ps-3*alpha])
@@ -120,16 +121,102 @@ def simulate(f,n,k):
     # find where you received 2s
     mask2 = mask == 2
     maskany = mask > 0
+    return np.mean(maskany), np.mean(sorted_bids, axis=0), np.mean(num_clearing)
 
-    # print(sum(mask)/M)
-    print(np.mean(maskany))
+    # print(sum(mask)/M)r
+    # print(np.mean(maskany))
     # probability that you won 2s
-    print(np.mean(mask2))
-if __name__ == "__main__":
+    # print(np.mean(mask2))
+def multiple_runs():
     bf = None
     n = 5
-    k = 3
+    for k in range(1,5):
+        # k = 1
+        plt.subplot(2,2,k)
+        bf = solve_opt(n, k)
+        m_list = []
+        p = np.linspace(.05, .95)
+        for ps in p:
+
+            m,s,nc  = simulate(ps, bf, n, k)
+            m_list.append(m)
+
+        # print(m_list)
+        # num = '22' + str(k)
+
+        plt.plot(p,m_list)
+    plt.title('win pct vs price')
+    plt.show()
+
+def avg_amount_accepted():
+    bf = None
+    n = 4
+    k = 2
     bf = solve_opt(n, k)
-    simulate(bf, n, k)
+    m_list = []
+    s_list = []
+    nc_list = []
+    p = np.linspace(.05,.95)
+    for ps in p:
+        m,s,nc = simulate(ps, bf, n, k)
+        m_list.append(m)
+        # print(s)
+        s_list.append(s[0:k])
+        nc_list.append(nc)
+    plt.figure()
+    plt.plot(p,nc_list)
+    plt.show()
+def avg_winning_bid():
+    bf = None
+    n = 4
+    k = 2
+    bf = solve_opt(n, k)
+    m_list = []
+    s_list = []
+    nc_list = []
+    p = np.linspace(.05,.95)
+    for ps in p:
+        m,s,nc = simulate(ps, bf, n, k)
+        m_list.append(m)
+        # print(s)
+        s_list.append(s[0:k])
+        nc_list.append(nc)
+    plt.figure()
+    plt.plot(p, s_list)
+    plt.show()
 
+def report():
+    bf = None
+    n = 6
+    k = 5
+    bf = solve_opt(n, k)
+    m_list = []
+    s_list = []
+    nc_list = []
+    p = np.linspace(.05, .95)
+    for ps in p:
+        m,s,nc = simulate(ps, bf, n, k)
+        m_list.append(m)
+        # print(s)
+        s_list.append(s[0:k])
+        nc_list.append(nc)
+    plt.figure()
+    plt.plot(p, s_list)
+    plt.title('accepted bids')
+    plt.figure()
+    plt.plot(p, nc_list)
+    plt.title('avg addition')
+    plt.figure()
+    plt.plot(p, p/np.array(nc_list))
+    plt.title('average cost $/unit')
+    plt.figure()
+    plt.plot(p,p*np.array(nc_list))
+    plt.title('total payments')
+    plt.show()
 
+if __name__ == "__main__":
+    report()
+
+    # avg_amount_accepted()
+    # avg_winning_bid()
+    # multiple_runs()
