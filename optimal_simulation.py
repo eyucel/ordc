@@ -133,6 +133,11 @@ def simulate(ps, f,n,k):
     mask = np.where(num_clearing > ind[1], num_clearing, 0)
     # print(mask)
 
+    q = np.arange(0,M,dtype=int)
+    # print(sorted_bids[q, num_clearing])
+    #overpayment
+    op = np.mean((num_clearing>0)*(p[num_clearing-1]-sorted_bids[q,num_clearing-1]))
+
     # find where you received 2s
     mask2 = mask == 2
     maskany = mask > 0
@@ -199,7 +204,14 @@ def simulate2(ps, f,n,a):
     mask2 = mask == 2
     maskany = mask > 0
     # print(np.mean(maskany))
-    return np.mean(maskany), np.mean(maskany * (p[num_clearing-1]-costs[:,0]), axis=0), np.mean(num_clearing), np.mean((num_clearing>0) * p[num_clearing-1])
+    # print(sorted_bids.shape)
+    # print(num_clearing.shape)
+    q = np.arange(0,M,dtype=int)
+    # print(sorted_bids[q, num_clearing])
+    #overpayment
+    op = np.mean((num_clearing>0)*(p[num_clearing-1]-sorted_bids[q,num_clearing-1]))
+
+    return np.mean(maskany), np.mean(maskany * (p[num_clearing-1]-costs[:,0]), axis=0), np.mean(num_clearing), np.mean((num_clearing>0) * p[num_clearing-1]),op, np.mean((num_clearing >0)*sorted_bids[:,0])
 
     # print(sum(mask)/M)r
 
@@ -267,7 +279,7 @@ def report2():
     n = 3
     # bf = solve_opt(n, k)
     bf = bidf
-    a = .1
+    a = .2
     for n in range(2,7):
         c = np.linspace(.001,.998,num=100)
         # f4 = plt.figure(4)
@@ -283,19 +295,29 @@ def report2():
         s_list = []
         nc_list = []
         p_list = []
+        op_list = []
+        ab_list=[]
         p = np.linspace(0.01, 0.99, num=100)
         for ps in p:
-            m,s,nc, pp = simulate2(ps, bf, n, a)
+            m,s,nc, pp, op,ab = simulate2(ps, bf, n, a)
             m_list.append(m)
             # print(s)
             s_list.append(s)
             nc_list.append(nc)
             p_list.append(pp)
-        f1 = plt.figure(1)
-        plt.plot(p, s_list, label='n='+str(n))
+            op_list.append(op)
+            ab_list.append(ab)
+        f7 = plt.figure(7)
+        plt.plot(p, m_list, label='n='+str(n))
         # plt.title('Probability of Individual Winning')
         plt.xlabel('Price')
         plt.ylabel('Probability')
+
+        f1 = plt.figure(1)
+        plt.plot(p, s_list, label='n='+str(n))
+        # plt.title('Avg. Profit')
+        plt.xlabel('Price')
+        plt.ylabel('Profit')
         # plt.figure(1)
         # plt.plot(p, s_list, label='n='+str(n))
         # plt.title('accepted bids')
@@ -310,14 +332,20 @@ def report2():
         # plt.axis([0,1,0,1.1])
         f3 = plt.figure(3)
         plt.plot(p, np.array(p_list)*np.array(nc_list), label='n='+str(n))
-        plt.title('Total Expected Cost')
+        # plt.title('Total Expected Cost')
         plt.xlabel('Price')
         plt.ylabel('Cost')
         f5 = plt.figure(5)
-        plt.plot(p, p_list, label='n='+str(n))
-        plt.title('Avg Clearing Price')
-        plt.xlabel('Price')
-        plt.ylabel('Price')
+        plt.plot(p, ab_list, label='n='+str(n))
+        # plt.title('Avg Clearing Price')
+        plt.xlabel('Initial Price')
+        plt.ylabel('Final Clearing Price')
+        # plt.show()
+        f6 = plt.figure(6)
+        plt.plot(p, np.array(op_list)*np.array(nc_list), label='n='+str(n))
+        # plt.title(Overpayment')
+        plt.xlabel('Initial Price')
+        plt.ylabel('Excess Payment')
         # plt.show()
         c = np.linspace(.001,.998,num=100)
         f4 = plt.figure(4)
@@ -333,7 +361,7 @@ def report2():
     ax = f2.gca()
     handles, labels = ax.get_legend_handles_labels()
     ax.legend(handles, labels, loc=0)
-    # f2.savefig('n_units.pdf')
+    # f2.savefig('n_desc_units.pdf')
     ax = f3.gca()
     handles, labels = ax.get_legend_handles_labels()
     ax.legend(handles, labels, loc=0)
@@ -343,7 +371,14 @@ def report2():
     ax = f5.gca()
     handles, labels = ax.get_legend_handles_labels()
     ax.legend(handles, labels, loc=0)
-    # f4.savefig('n_bf.pdf')
+    # f5.savefig('n_desc_avg_price.pdf')
+    ax = f6.gca()
+    handles, labels = ax.get_legend_handles_labels()
+    ax.legend(handles, labels, loc=0)
+    # f6.savefig('n_desc_tot_op.pdf')
+    ax = f7.gca()
+    handles, labels = ax.get_legend_handles_labels()
+    ax.legend(handles, labels, loc=0)
     plt.show()
 def report():
     bf = None
