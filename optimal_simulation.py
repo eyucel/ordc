@@ -15,10 +15,13 @@ import seaborn as sns
 np.random.seed()
 # sns.set(font="Arial")
 def bidf(c, n, a):
-    num1 = (a*a)* (-1 + n) * lambertw(-np.exp((2 * (-1 + c) + a * (-1 + n) * (-4 + a + 4 * c - 2 * a * c + 2 * a * (-1 + c) * n))/(a*a * (n-1))))
-    num2 = -2*c + a *(a - 2 * c) * (-1 + n)
-    denom = 2 + 2 * a * (-1 + n)
-    w = -(num1 + num2) /denom
+    # num1 = (a*a)* (-1 + n) * lambertw(-np.exp((2 * (-1 + c) + a * (-1 + n) * (-4 + a + 4 * c - 2 * a * c + 2 * a * (-1 + c) * n))/(a*a * (n-1))))
+    # num2 = -2*c + a *(a - 2 * c) * (-1 + n)
+    # denom = 2 + 2 * a * (-1 + n)
+    # w = -(num1 + num2) /denom
+
+    w = ((1-n)*a*a + 2 * a * c * n - 2 * a * c + 2 * c)/(2 + 2 * a * (-1 + n))
+
     y = np.where(w<0, 0, w)
     return y
 def f(c, y):
@@ -81,7 +84,7 @@ def solve_opt(n,k):
     return bid_func
     # print(y[::-1])
 def simulate(ps, f,n,k):
-    M = 500000
+    M = 50000
 
 
     # own_idx = np.random.random_integers(0,n-1,size=(M,1))
@@ -142,7 +145,14 @@ def simulate(ps, f,n,k):
     mask2 = mask == 2
     maskany = mask > 0
     # print(np.mean(maskany))
-    return np.mean(maskany), np.mean(sorted_bids, axis=0), np.mean(num_clearing)
+
+
+    # retrun  m, s, nc, pp, op, ab
+    return np.mean(maskany), np.mean(maskany * (p[num_clearing-1]-costs[:,0]), axis=0), np.mean(num_clearing), np.mean((num_clearing>0) * p[num_clearing-1]),op, np.mean((num_clearing >0)*sorted_bids[:, 0])
+
+
+
+    # return np.mean(maskany), np.mean(sorted_bids, axis=0), np.mean(num_clearing)
 
     # print(sum(mask)/M)r
 
@@ -208,10 +218,13 @@ def simulate2(ps, f,n,a):
     # print(num_clearing.shape)
     q = np.arange(0,M,dtype=int)
     # print(sorted_bids[q, num_clearing])
+
     #overpayment
     op = np.mean((num_clearing>0)*(p[num_clearing-1]-sorted_bids[q,num_clearing-1]))
 
-    return np.mean(maskany), np.mean(maskany * (p[num_clearing-1]-costs[:,0]), axis=0), np.mean(num_clearing), np.mean((num_clearing>0) * p[num_clearing-1]),op, np.mean((num_clearing >0)*sorted_bids[:,0])
+
+    # retrun  m, s, nc, pp, op, ab
+    return np.mean(maskany), np.mean(maskany * (p[num_clearing-1]-costs[:,0]), axis=0), np.mean(num_clearing), np.mean((num_clearing>0) * p[num_clearing-1]),op, np.mean((num_clearing >0)*sorted_bids[:, 0])
 
     # print(sum(mask)/M)r
 
@@ -279,8 +292,9 @@ def report2():
     n = 3
     # bf = solve_opt(n, k)
     bf = bidf
-    a = .2
-    for n in range(2,7):
+    a = .3
+    for n in range(2,6):
+        print(bidf(1,n,a))
         c = np.linspace(.001,.998,num=100)
         # f4 = plt.figure(4)
         # plt.plot(c,bf(c,n,a=.2),label='n='+str(n))
@@ -331,6 +345,7 @@ def report2():
         # plt.title("derivative")
         # plt.axis([0,1,0,1.1])
         f3 = plt.figure(3)
+        # cost to auction holder
         plt.plot(p, np.array(p_list)*np.array(nc_list), label='n='+str(n))
         # plt.title('Total Expected Cost')
         plt.xlabel('Price')
@@ -413,24 +428,36 @@ def report():
 
 def reportn():
     bf = None
-    for n in range(3,6):
-        k = 2
+    for n in range(10,11):
+        k = 5
         bf = solve_opt(n, k)
         m_list = []
         s_list = []
         nc_list = []
+        p_list = []
+        op_list = []
+        ab_list=[]
         p = np.linspace(0.01, 0.99, num=100)
         for ps in p:
-            m, s, nc = simulate(ps, bf, n, k)
+            m,s,nc, pp, op,ab  = simulate(ps, bf, n, k)
             m_list.append(m)
             # print(s)
-            s_list.append(s[0:k])
+            s_list.append(s)
             nc_list.append(nc)
-        f1 = plt.figure(1)
+            p_list.append(pp)
+            op_list.append(op)
+            ab_list.append(ab)
+        f7 = plt.figure(7)
         plt.plot(p, m_list, label='n='+str(n))
         # plt.title('Probability of Individual Winning')
         plt.xlabel('Price')
         plt.ylabel('Probability')
+
+        f1 = plt.figure(1)
+        plt.plot(p, s_list, label='n='+str(n))
+        # plt.title('Avg. Profit')
+        plt.xlabel('Price')
+        plt.ylabel('Profit')
         # plt.figure(1)
         # plt.plot(p, s_list, label='n='+str(n))
         # plt.title('accepted bids')
@@ -444,10 +471,22 @@ def reportn():
         # plt.title("derivative")
         # plt.axis([0,1,0,1.1])
         f3 = plt.figure(3)
-        plt.plot(p, p*np.array(nc_list), label='n='+str(n))
-        plt.title('Total Expected Cost')
+        # cost to auction holder
+        plt.plot(p, np.array(p_list)*np.array(nc_list), label='n='+str(n))
+        # plt.title('Total Expected Cost')
         plt.xlabel('Price')
         plt.ylabel('Cost')
+        f5 = plt.figure(5)
+        plt.plot(p, ab_list, label='n='+str(n))
+        # plt.title('Avg Clearing Price')
+        plt.xlabel('Initial Price')
+        plt.ylabel('Final Clearing Price')
+        # plt.show()
+        f6 = plt.figure(6)
+        plt.plot(p, np.array(op_list)*np.array(nc_list), label='n='+str(n))
+        # plt.title(Overpayment')
+        plt.xlabel('Initial Price')
+        plt.ylabel('Excess Payment')
         # plt.show()
         c = np.linspace(.001,.998,num=100)
         f4 = plt.figure(4)
@@ -459,18 +498,29 @@ def reportn():
     ax = f1.gca()
     handles, labels = ax.get_legend_handles_labels()
     ax.legend(handles, labels, loc=0)
-    f1.savefig('n_prob.pdf')
+    # f1.savefig('n_prob.pdf')
     ax = f2.gca()
     handles, labels = ax.get_legend_handles_labels()
     ax.legend(handles, labels, loc=0)
-    f2.savefig('n_units.pdf')
+    # f2.savefig('n_desc_units.pdf')
     ax = f3.gca()
     handles, labels = ax.get_legend_handles_labels()
     ax.legend(handles, labels, loc=0)
     ax = f4.gca()
     handles, labels = ax.get_legend_handles_labels()
     ax.legend(handles, labels, loc=0)
-    f4.savefig('n_bf.pdf')
+    ax = f5.gca()
+    handles, labels = ax.get_legend_handles_labels()
+    ax.legend(handles, labels, loc=0)
+    # f5.savefig('n_desc_avg_price.pdf')
+    ax = f6.gca()
+    handles, labels = ax.get_legend_handles_labels()
+    ax.legend(handles, labels, loc=0)
+    # f6.savefig('n_desc_tot_op.pdf')
+    ax = f7.gca()
+    handles, labels = ax.get_legend_handles_labels()
+    ax.legend(handles, labels, loc=0)
+    plt.show()
 def reportk():
     bf = None
 
