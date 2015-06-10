@@ -32,16 +32,25 @@ toolbox = base.Toolbox()
 toolbox.register("attr_bool", random.uniform, -10, 10)
 # Structure initializers
 toolbox.register("individual", tools.initRepeat, creator.Individual, 
-    toolbox.attr_bool, 3)
+    toolbox.attr_bool, 2)
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
 k = 100000
 n = 2
 costs = np.random.rand(k, n)
+p = np.random.rand(k, 1)
+bidseq = np.zeros((k,n))
+bidsneq = np.zeros((k,n))
+averageneq = np.zeros(n)
 p = np.random.rand(k,1)
 
 
 def evalOneMax(individual):
+
+    bidseq = polyval(costs, individual[2:4])
+    sorted_bid_owners = np.argsort(bidseq, axis=1)
+    lowest = sorted_bid_owners == 0
+    p_clearing = bidseq <= p
     bids = polyval(costs, individual)
     sorted_bid_owners = np.argsort(bids, axis=1)
     lowest = sorted_bid_owners == 0
@@ -50,6 +59,26 @@ def evalOneMax(individual):
     # print(mask)
 
     payoff = (p-costs)*mask
+    averageeq = np.mean(payoff,axis=0)
+
+    for i in range(0,n):
+        bidsneq[:, 0:i] = polyval(costs[:, 0:i], individual[2:4])
+        bidsneq[:, i] = polyval(costs[:, i], individual[0:2])
+        if i != n-1:
+            bidsneq[:, i+1:n] = polyval(costs[:, i+1:n], individual[2:4])
+        sorted_bid_owners = np.argsort(bidsneq, axis=1)
+        lowest = sorted_bid_owners == 0
+        p_clearing = bidsneq <= p
+        mask = lowest*p_clearing
+        payoff = (p-costs)*mask
+        averageneq[i] = np.mean(payoff[i])
+
+
+
+
+
+    return sum(averageeq-averageneq)-np.sqrt((individual[0]-individual[2])**2 + (individual[1]-individual[3])**2),
+    payoff = (p-costs)*mask
     average = np.mean(payoff,axis=0)
 
     return sum(average )-sum(distance.pdist(average.reshape(n,1))),
@@ -57,9 +86,8 @@ def evalOneMax(individual):
 # Operator registering
 toolbox.register("evaluate", evalOneMax)
 toolbox.register("mate", tools.cxTwoPoint)
-toolbox.register("mutate", tools.mutGaussian, mu=0, sigma=2, indpb=0.075)
+toolbox.register("mutate", tools.mutGaussian, mu=0, sigma=1, indpb=0.05)
 toolbox.register("select", tools.selTournament, tournsize=3)
-
 
 def main():
     random.seed(64)
