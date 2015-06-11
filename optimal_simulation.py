@@ -559,8 +559,8 @@ def reportk():
 
 def reportk2():
     bf = None
-    for k in range(2,5):
-        n = 5
+    for k in range(3,4):
+        n = 6
         bf = solve_opt(n, k)
         m_list = []
         s_list = []
@@ -570,7 +570,7 @@ def reportk2():
         ab_list=[]
         p = np.linspace(0.01, 0.99, num=100)
         for ps in p:
-            m,s,nc, pp, op,ab  = simulate(ps, bf, n, k)
+            m,s,nc, pp, op, ab  = simulate(ps, bf, n, k)
             m_list.append(m)
             # print(s)
             s_list.append(s)
@@ -657,10 +657,10 @@ def reportk2():
     plt.show()
 if __name__ == "__main__":
     # report()
-    reportn()
+    # reportn()
     # reportk()
     # report2()
-    # reportk2()
+    reportk2()
     # plt.show()
     # avg_amount_accepted()
     # avg_winning_bid()

@@ -25,15 +25,7 @@ def bidf(c, n, a):
 
     y = np.where(w<0, 0, w)
     return y
-def f(c, y):
-    w = y[0]
 
-    f2 = (2*c* (1 - 2 * c + w) * (-1 + w)) / (2*(c**2 -1) *(c - w))
-    f5 = 5*c**4 * (1-2*c+w) * (-1+w)/ (2*(c**5-1)*(c-w))
-    f1 = (1-2*c+w) * (-1+w)/ (2*(c-1)*(c-w))
-    f3 = (3*c**2 * (1 - 2 * c + w) * (-1 + w)) / (2*(c**3 -1) *(c - w))
-    # f0 = (w-2*c+1)*(w-1) /( (c-1)*(c-w))
-    return f2
 def flex(c,y,n,k):
     j = n-1
     # n here is other number of players aka N-1
@@ -68,7 +60,7 @@ def solve_opt(n,k):
     r = ode(flex)
     r.set_f_params(n,k)
     r.set_initial_value(y0, t0)
-    r.set_integrator("lsoda", nsteps=5000)
+    r.set_integrator("lsoda", nsteps=10000)
     i = 0
     while r.successful() and r.t > t1:
         r.integrate(r.t+dt)
@@ -81,7 +73,7 @@ def solve_opt(n,k):
 
     # plt.show()
     bid_func = interp1d(t[::-1], w[::-1])
-    print(min(t),max(t))
+    # print(min(t),max(t))
     return bid_func
     # print(y[::-1])
 def simulate(ps, f,n,k):
@@ -231,429 +223,127 @@ def simulate2(ps, f,n,a):
 
     # probability that you won 2s
     # print(np.mean(mask2))
-def multiple_runs():
-    bf = None
-    n = 5
-    for k in range(1,5):
-        # k = 1
-        plt.subplot(2,2,k)
-        bf = solve_opt(n, k)
-        m_list = []
-        p = np.linspace(.05, .95)
-        for ps in p:
 
-            m,s,nc  = simulate(ps, bf, n, k)
-            m_list.append(m)
+class container:
+    def __init__(self, name):
+        self.name = name
 
-        # print(m_list)
-        # num = '22' + str(k)
 
-        plt.plot(p,m_list)
-    plt.title('win pct vs price')
-    plt.show()
+def vollsim(ps, bf_f, bf_s):
+    a = .1
+    n = 6
+    k = 3
 
-def avg_amount_accepted():
-    bf = None
-    n = 4
-    k = 2
-    bf = solve_opt(n, k)
-    m_list = []
-    s_list = []
-    nc_list = []
-    p = np.linspace(0.01, 0.99, num=100)
-    for ps in p:
-        m,s,nc = simulate(ps, bf, n, k)
-        m_list.append(m)
-        # print(s)
-        s_list.append(s[0:k])
-        nc_list.append(nc)
-    plt.figure()
-    plt.plot(p,nc_list)
-    plt.show()
-def avg_winning_bid():
-    bf = None
-    n = 4
-    k = 2
-    bf = solve_opt(n, k)
-    m_list = []
-    s_list = []
-    nc_list = []
-    p = np.linspace(0.01, 0.99, num=100)
-    for ps in p:
-        m,s,nc = simulate(ps, bf, n, k)
-        m_list.append(m)
-        # print(s)
-        s_list.append(s[0:k])
-        nc_list.append(nc)
-    plt.figure()
-    plt.plot(p, s_list)
-    plt.show()
-def report2():
-    bf = None
-    n = 3
-    # bf = solve_opt(n, k)
-    bf = bidf
-    a = .3
-    for n in range(2,6):
-        print(bidf(1,n,a))
-        c = np.linspace(.001,.998,num=100)
-        # f4 = plt.figure(4)
-        # plt.plot(c,bf(c,n,a=.2),label='n='+str(n))
-        # plt.title('Optimal Bid Function')
-        # plt.xlabel('Cost')
-        # plt.ylabel('Bid')
-        # ax = f4.gca()
-        # handles, labels = ax.get_legend_handles_labels()
-        # ax.legend(handles, labels, loc=0)
-        # f4.savefig('n_bf_desc.pdf')
-        m_list = []
-        s_list = []
-        nc_list = []
-        p_list = []
-        op_list = []
-        ab_list=[]
-        p = np.linspace(0.01, 0.99, num=100)
-        for ps in p:
-            m,s,nc, pp, op,ab = simulate2(ps, bf, n, a)
-            m_list.append(m)
-            # print(s)
-            s_list.append(s)
-            nc_list.append(nc)
-            p_list.append(pp)
-            op_list.append(op)
-            ab_list.append(ab)
-        f7 = plt.figure(7)
-        plt.plot(p, m_list, label='n='+str(n))
-        # plt.title('Probability of Individual Winning')
-        plt.xlabel('Price')
-        plt.ylabel('Probability')
+    flat = container("flat")
+    slope = container("slope")
 
-        f1 = plt.figure(1)
-        plt.plot(p, s_list, label='n='+str(n))
-        # plt.title('Avg. Profit')
-        plt.xlabel('Price')
-        plt.ylabel('Profit')
-        # plt.figure(1)
-        # plt.plot(p, s_list, label='n='+str(n))
-        # plt.title('accepted bids')
-        f2 = plt.figure(2)
-        plt.plot(p, nc_list, label='n='+str(n))
-        # plt.title('Mean Number of Units Accepted')
-        plt.xlabel('Price')
-        plt.ylabel('Units')
-        # plt.figure()
-        # plt.plot(p,np.gradient(nc_list,np.gradient(p)))
-        # plt.title("derivative")
-        # plt.axis([0,1,0,1.1])
-        f3 = plt.figure(3)
-        # cost to auction holder
-        plt.plot(p, np.array(p_list)*np.array(nc_list), label='n='+str(n))
-        # plt.title('Total Expected Cost')
-        plt.xlabel('Price')
-        plt.ylabel('Cost')
-        f5 = plt.figure(5)
-        plt.plot(p, ab_list, label='n='+str(n))
-        # plt.title('Avg Clearing Price')
-        plt.xlabel('Initial Price')
-        plt.ylabel('Final Clearing Price')
-        # plt.show()
-        f6 = plt.figure(6)
-        plt.plot(p, np.array(op_list)*np.array(nc_list), label='n='+str(n))
-        # plt.title(Overpayment')
-        plt.xlabel('Initial Price')
-        plt.ylabel('Excess Payment')
-        # plt.show()
-        c = np.linspace(.001,.998,num=100)
-        f4 = plt.figure(4)
-        plt.plot(c,bf(c,n,a),label='n='+str(n))
-        # plt.title('Optimal Bid Function')
-        plt.xlabel('Cost')
-        plt.ylabel('Bid')
-        # plt.show()
-    ax = f1.gca()
-    handles, labels = ax.get_legend_handles_labels()
-    ax.legend(handles, labels, loc=0)
-    # f1.savefig('n_prob.pdf')
-    ax = f2.gca()
-    handles, labels = ax.get_legend_handles_labels()
-    ax.legend(handles, labels, loc=0)
-    # f2.savefig('n_desc_units.pdf')
-    ax = f3.gca()
-    handles, labels = ax.get_legend_handles_labels()
-    ax.legend(handles, labels, loc=0)
-    ax = f4.gca()
-    handles, labels = ax.get_legend_handles_labels()
-    ax.legend(handles, labels, loc=0)
-    ax = f5.gca()
-    handles, labels = ax.get_legend_handles_labels()
-    ax.legend(handles, labels, loc=0)
-    # f5.savefig('n_desc_avg_price.pdf')
-    ax = f6.gca()
-    handles, labels = ax.get_legend_handles_labels()
-    ax.legend(handles, labels, loc=0)
-    # f6.savefig('n_desc_tot_op.pdf')
-    ax = f7.gca()
-    handles, labels = ax.get_legend_handles_labels()
-    ax.legend(handles, labels, loc=0)
-    plt.show()
-def report():
-    bf = None
-    n = 3
-    k = 4
-    # bf = solve_opt(n, k)
-    bf = bidf
-    m_list = []
-    s_list = []
-    nc_list = []
-    p = np.linspace(0.01, 0.99, num=100)
-    for ps in p:
-        m,s,nc = simulate(ps, bf, n, k)
-        m_list.append(m)
-        # print(s)
-        s_list.append(s[0:k])
-        nc_list.append(nc)
-    plt.figure()
-    plt.plot(p, s_list)
-    plt.title('accepted bids')
-    plt.figure()
-    plt.plot(p, nc_list)
-    plt.title('avg addition')
-    # plt.figure()
-    # plt.plot(p,np.gradient(nc_list,np.gradient(p)))
-    # plt.title("derivative")
-    # plt.axis([0,1,0,1.1])
-    plt.figure()
-    plt.plot(p, p*np.array(nc_list))
-    plt.title('total payments')
-    plt.show()
+    container_list = [slope, flat]
+    flat.bf = bf_f
+    slope.bf = bf_s
+    flat.p = np.array(k*[ps]+(n-k)*[-1])
+    # print(flat.p)
+    slope.p = np.array([ps-i*a for i in range(0, n)])
+    M = 50000
+    # own_idx = np.random.random_integers(0,n-1,size=(M,1))
+    # generate random bids
+    costs = np.random.rand(M, n)
 
-def reportn():
-    bf = None
-    for n in range(10,11):
-        k = 5
-        bf = solve_opt(n, k)
-        m_list = []
-        s_list = []
-        nc_list = []
-        p_list = []
-        op_list = []
-        ab_list=[]
-        p = np.linspace(0.01, 0.99, num=100)
-        for ps in p:
-            m,s,nc, pp, op,ab  = simulate(ps, bf, n, k)
-            m_list.append(m)
-            # print(s)
-            s_list.append(s)
-            nc_list.append(nc)
-            p_list.append(pp)
-            op_list.append(op)
-            ab_list.append(ab)
-        f7 = plt.figure(7)
-        plt.plot(p, m_list, label='n='+str(n))
-        # plt.title('Probability of Individual Winning')
-        plt.xlabel('Price')
-        plt.ylabel('Probability')
+    sorted_owners = np.argsort(costs, axis=1)
+    sorted_costs = np.sort(costs, axis=1)
 
-        f1 = plt.figure(1)
-        plt.plot(p, s_list, label='n='+str(n))
-        # plt.title('Avg. Profit')
-        plt.xlabel('Price')
-        plt.ylabel('Profit')
-        # plt.figure(1)
-        # plt.plot(p, s_list, label='n='+str(n))
-        # plt.title('accepted bids')
-        f2 = plt.figure(2)
-        plt.plot(p, nc_list, label='n='+str(n))
-        # plt.title('Mean Number of Units Accepted')
-        plt.xlabel('Price')
-        plt.ylabel('Units')
-        # plt.figure()
-        # plt.plot(p,np.gradient(nc_list,np.gradient(p)))
-        # plt.title("derivative")
-        # plt.axis([0,1,0,1.1])
-        f3 = plt.figure(3)
-        # cost to auction holder
-        plt.plot(p, np.array(p_list)*np.array(nc_list), label='n='+str(n))
-        # plt.title('Total Expected Cost')
-        plt.xlabel('Price')
-        plt.ylabel('Cost')
-        f5 = plt.figure(5)
-        plt.plot(p, ab_list, label='n='+str(n))
-        # plt.title('Avg Clearing Price')
-        plt.xlabel('Initial Price')
-        plt.ylabel('Final Clearing Price')
-        # plt.show()
-        f6 = plt.figure(6)
-        plt.plot(p, np.array(op_list)*np.array(nc_list), label='n='+str(n))
-        # plt.title(Overpayment')
-        plt.xlabel('Initial Price')
-        plt.ylabel('Excess Payment')
-        # plt.show()
-        c = np.linspace(.001,.998,num=100)
-        f4 = plt.figure(4)
-        plt.plot(c,bf(c),label='n='+str(n))
-        # plt.title('Optimal Bid Function')
-        plt.xlabel('Cost')
-        plt.ylabel('Bid')
-        # plt.show()
-    ax = f1.gca()
-    handles, labels = ax.get_legend_handles_labels()
-    ax.legend(handles, labels, loc=0)
-    # f1.savefig('n_prob.pdf')
-    ax = f2.gca()
-    handles, labels = ax.get_legend_handles_labels()
-    ax.legend(handles, labels, loc=0)
-    # f2.savefig('n_desc_units.pdf')
-    ax = f3.gca()
-    handles, labels = ax.get_legend_handles_labels()
-    ax.legend(handles, labels, loc=0)
-    ax = f4.gca()
-    handles, labels = ax.get_legend_handles_labels()
-    ax.legend(handles, labels, loc=0)
-    ax = f5.gca()
-    handles, labels = ax.get_legend_handles_labels()
-    ax.legend(handles, labels, loc=0)
-    # f5.savefig('n_desc_avg_price.pdf')
-    ax = f6.gca()
-    handles, labels = ax.get_legend_handles_labels()
-    ax.legend(handles, labels, loc=0)
-    # f6.savefig('n_desc_tot_op.pdf')
-    ax = f7.gca()
-    handles, labels = ax.get_legend_handles_labels()
-    ax.legend(handles, labels, loc=0)
-    plt.show()
-def reportk():
-    bf = None
+    for c in container_list:
+        if c.name == "flat":
+            sorted_costs[sorted_costs <.001] = .001
+            sorted_costs[sorted_costs >.998] = .998
+            c.sorted_bids = c.bf(sorted_costs)
+        else:
+            c.sorted_bids = c.bf(sorted_costs, n, a)
+        # p = np.random.rand(k,2)
+        # level 1 price
+        # ps = .9
 
-    for k in range(1,5):
-        n = 5
-        bf = solve_opt(n, k)
-        m_list = []
-        s_list = []
-        nc_list = []
-        p = np.linspace(0.01, 0.99, num=100)
-        for ps in p:
-            m, s, nc = simulate(ps, bf, n, k)
-            m_list.append(m)
-            # print(s)
-            s_list.append(s[0:k])
-            nc_list.append(nc)
-        f1 = plt.figure(1)
-        plt.plot(p, m_list, label='k='+str(k))
-        # plt.title('Probability of Individual Winning')
-        plt.xlabel('Price')
-        plt.ylabel('Probability')
-        # plt.figure(1)
-        # plt.plot(p, s_list, label='n='+str(n))
-        # plt.title('accepted bids')
-        f2 = plt.figure(2)
-        plt.plot(p, nc_list, label='k='+str(k))
-        # plt.title('Mean Number of Units Accepted')
-        plt.xlabel('Price')
-        plt.ylabel('Units')
-        # plt.figure()
-        # plt.plot(p,np.gradient(nc_list,np.gradient(p)))
-        # plt.title("derivative")
-        # plt.axis([0,1,0,1.1])
-        f3 = plt.figure(3)
-        plt.plot(p, p*np.array(nc_list), label='k='+str(k))
-        plt.title('Total Expected Cost')
-        plt.xlabel('Price')
-        plt.ylabel('Cost')
+        # other prices
 
-        c = np.linspace(.001,.998,num=100)
-        f4 = plt.figure(4)
-        plt.plot(c,bf(c),label='k='+str(k))
-        # plt.title('Optimal Bid Function')
-        plt.xlabel('Cost')
-        plt.ylabel('Bid')
-        # plt.show()
-    ax = f1.gca()
-    handles, labels = ax.get_legend_handles_labels()
-    ax.legend(handles, labels, loc=0)
-    f1.savefig('k_prob.pdf')
-    ax = f2.gca()
-    handles, labels = ax.get_legend_handles_labels()
-    ax.legend(handles, labels, loc=0)
-    f2.savefig('k_units.pdf')
-    ax = f3.gca()
-    handles, labels = ax.get_legend_handles_labels()
-    ax.legend(handles, labels, loc=0)
-    ax = f4.gca()
-    handles, labels = ax.get_legend_handles_labels()
-    ax.legend(handles, labels, loc=0)
-    f4.savefig('k_bf.pdf')
-    plt.close()
+        c.p = np.where(c.p < 0, 0, c.p)
+        # print(p)
+        # set player 1 bids to something fixed.
+        # bids[:, 0] = .75
+        # print(bids)
+        # return bidder #s in order
+        # sorted_bid_owners = np.argsort(bids, axis=1)
+        # sorted_bids = np.sort(bids, axis=1)
+        # print(sorted_bids)
+        # print(sorted_bid_owners)
+        # true if the xth unit of supply is less than xth unit of demand
+        c.p_clearing = c.sorted_bids <= c.p
+        # print(p_clearing)
 
-def reportk2():
-    bf = None
-    n = 15
-    for k in range(9,n):
+        # count number of units that clear
+        c.num_clearing = np.sum(c.p_clearing, axis=1)
+        # print(num_clearing)
 
-        bf = solve_opt(n, k)
-        m_list = []
-        s_list = []
-        nc_list = []
-        p = np.linspace(0.01, 0.99, num=100)
-        # for ps in p:
-        #     m, s, nc = simulate(ps, bf, n, k)
-        #     m_list.append(m)
-        #     # print(s)
-        #     s_list.append(s[0:k])
-        #     nc_list.append(nc)
-        # f1 = plt.figure(1)
-        # plt.plot(p, m_list, label='k='+str(k))
-        # # plt.title('Probability of Individual Winning')
-        # plt.xlabel('Price')
-        # plt.ylabel('Probability')
-        # # plt.figure(1)
-        # # plt.plot(p, s_list, label='n='+str(n))
-        # # plt.title('accepted bids')
-        # f2 = plt.figure(2)
-        # plt.plot(p, nc_list, label='k='+str(k))
-        # # plt.title('Mean Number of Units Accepted')
-        # plt.xlabel('Price')
-        # plt.ylabel('Units')
-        # # plt.figure()
-        # # plt.plot(p,np.gradient(nc_list,np.gradient(p)))
-        # # plt.title("derivative")
-        # # plt.axis([0,1,0,1.1])
-        # f3 = plt.figure(3)
-        # plt.plot(p, p*np.array(nc_list), label='k='+str(k))
-        # plt.title('Total Expected Cost')
-        # plt.xlabel('Price')
-        # plt.ylabel('Cost')
+        # get position of your bid (1st, 2nd, 3rd) comes out as 0, 1, 2
+        # ind = np.where(sorted_owners == own_idx)
+        c.ind = np.where(sorted_owners == 0)
+        # print(ind)
 
-        c = np.linspace(.001,.998,num=100)
-        f4 = plt.figure(4)
-        plt.plot(c,bf(c),label='k='+str(k))
-        plt.axis([0,1,0,1])
-        # plt.title('Optimal Bid Function')
-        plt.xlabel('Cost')
-        plt.ylabel('Bid')
-        # plt.show()
-    # ax = f1.gca()
-    # handles, labels = ax.get_legend_handles_labels()
-    # ax.legend(handles, labels, loc=0)
-    # f1.savefig('k_prob.pdf')
-    # ax = f2.gca()
-    # handles, labels = ax.get_legend_handles_labels()
-    # ax.legend(handles, labels, loc=0)
-    # f2.savefig('k_units.pdf')
-    # ax = f3.gca()
-    # handles, labels = ax.get_legend_handles_labels()
-    # ax.legend(handles, labels, loc=0)
-    ax = f4.gca()
-    handles, labels = ax.get_legend_handles_labels()
-    ax.legend(handles, labels, loc=0)
-    f4.savefig('k_bf.pdf')
-    plt.close()
+        # whether or not you were in the cheapest bids list, so if you were cheapest, ind was 0
+        # and you would clear as long as a price cleared. return which price you received (1, 2, 3 or 4)
+        c.mask = np.where(c.num_clearing > c.ind[1], c.num_clearing, 0)
+        # print(mask)
+
+        # find where you received 2s
+        c.mask2 = c.mask == 2
+        c.maskany = c.mask > 0
+        # print(np.mean(maskany))
+        # print(sorted_bids.shape)
+        # print(num_clearing.shape)
+        c.q = np.arange(0, M, dtype=int)
+        # print(sorted_bids[q, num_clearing])
+
+        #overpayment
+        c.op = np.mean((c.num_clearing>0)*(c.p[c.num_clearing-1]-c.sorted_bids[c.q, c.num_clearing-1]))
+        # retrun  m, s, nc, pp, op, ab
+
+        c.win_prob = np.mean(c.maskany)
+        c.profit = np.mean(c.maskany * (c.p[c.num_clearing-1]-costs[:,0]), axis=0)
+        c.num_clear = np.mean(c.num_clearing)
+        c.clearing_price = np.mean((c.num_clearing>0) * c.p[c.num_clearing-1])
+        c.avg_bid = np.mean((c.num_clearing >0)*c.sorted_bids[:, 0])
+    return container_list
+    # return np.mean(maskany), np.mean(maskany * (p[num_clearing-1]-costs[:,0]), axis=0), np.mean(num_clearing), np.mean((num_clearing>0) * p[num_clearing-1]),op, np.mean((num_clearing >0)*sorted_bids[:, 0])
+
+    # print(sum(mask)/M)r
+
+    # probability that you won 2s
+    # print(np.mean(mask2))
+
+
 if __name__ == "__main__":
-    # report()
-    # reportn()
-    # reportk()
-    report2()
-    # plt.show()
-    # avg_amount_accepted()
-    # avg_winning_bid()
-    # multiple_runs()
+    p = np.linspace(0.01, 0.99, num=99, endpoint=True)
+    # sns.set_context("poster", font_scale=1.5, rc={"lines.linewidth": 2.5})
+
+    slope = 0
+    flat = 1
+    num_clear_list=[[], []]
+
+    n = 6
+    k = 3
+    bf_f = solve_opt(n, k)
+    bf_s = bidf
+    for ps in p:
+        cl = vollsim(ps, bf_f, bf_s)
+        num_clear_list[flat].append(cl[flat].num_clear)
+        num_clear_list[slope].append(cl[slope].num_clear)
+    f1 = plt.figure(1)
+
+
+    plt.plot(p, num_clear_list[slope], label='slope')
+    plt.plot(p, num_clear_list[flat], label='flat')
+    # plt.title('accepted bids')
+    plt.xlabel('Price')
+    plt.ylabel('Units')
+    ax = f1.gca()
+    handles, labels = ax.get_legend_handles_labels()
+    ax.legend(handles, labels, loc=0)
+    plt.show()
