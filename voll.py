@@ -76,7 +76,7 @@ def solve_opt(n,k):
     # print(min(t),max(t))
     return bid_func
     # print(y[::-1])
-def simulate(ps, f,n,k):
+def simulate(ps, f, n, k):
     M = 50000
 
 
@@ -117,6 +117,7 @@ def simulate(ps, f,n,k):
 
     # count number of units that clear
     num_clearing = np.sum(p_clearing, axis=1)
+
     # print(num_clearing)
 
     # get position of your bid (1st, 2nd, 3rd) comes out as 0, 1, 2
@@ -243,6 +244,7 @@ def vollsim(ps, bf_f, bf_s):
     flat.p = np.array(k*[ps]+(n-k)*[-1])
     # print(flat.p)
     slope.p = np.array([ps-i*a for i in range(0, n)])
+    slope.p = np.where(slope.p < 0, 0, slope.p)
     M = 50000
     # own_idx = np.random.random_integers(0,n-1,size=(M,1))
     # generate random bids
@@ -264,7 +266,7 @@ def vollsim(ps, bf_f, bf_s):
 
         # other prices
 
-        c.p = np.where(c.p < 0, 0, c.p)
+
         # print(p)
         # set player 1 bids to something fixed.
         # bids[:, 0] = .75
@@ -326,18 +328,24 @@ if __name__ == "__main__":
     slope = 0
     flat = 1
     num_clear_list=[[], []]
-
+    lole_list = [None, None]
     n = 6
     k = 3
     bf_f = solve_opt(n, k)
     bf_s = bidf
     for ps in p:
         cl = vollsim(ps, bf_f, bf_s)
+
         num_clear_list[flat].append(cl[flat].num_clear)
+
         num_clear_list[slope].append(cl[slope].num_clear)
+
+
+    lole_calc = lambda irm: 0.1011 * np.power(irm, -49.01)
+
+    lole_list[flat] = lole_calc(0.97 + np.array(num_clear_list[flat])/100)
+    lole_list[slope] = lole_calc(0.97 + np.array(num_clear_list[slope])/100)
     f1 = plt.figure(1)
-
-
     plt.plot(p, num_clear_list[slope], label='slope')
     plt.plot(p, num_clear_list[flat], label='flat')
     # plt.title('accepted bids')
@@ -346,4 +354,16 @@ if __name__ == "__main__":
     ax = f1.gca()
     handles, labels = ax.get_legend_handles_labels()
     ax.legend(handles, labels, loc=0)
+
+    f2 = plt.figure(2)
+    plt.plot(p, lole_list[slope]*1.45, label='slope')
+    plt.plot(p, lole_list[flat]*1.45, label='flat')
+    # plt.title('accepted bids')
+    plt.xlabel('Price')
+    plt.ylabel('Units')
+    ax = f1.gca()
+    handles, labels = ax.get_legend_handles_labels()
+    ax.legend(handles, labels, loc=0)
+
+
     plt.show()
