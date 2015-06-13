@@ -14,7 +14,7 @@ import seaborn as sns
 # import matplotlib as mpl
 # mpl.rcParams['font.family'] = 'Arial'
 np.random.seed()
-# sns.set(font="Arial")
+
 def bidf(c, n, a):
     # num1 = (a*a)* (-1 + n) * lambertw(-np.exp((2 * (-1 + c) + a * (-1 + n) * (-4 + a + 4 * c - 2 * a * c + 2 * a * (-1 + c) * n))/(a*a * (n-1))))
     # num2 = -2*c + a *(a - 2 * c) * (-1 + n)
@@ -333,13 +333,16 @@ if __name__ == "__main__":
     k = 3
     bf_f = solve_opt(n, k)
     bf_s = bidf
+    clearing_price = []
     for ps in p:
         cl = vollsim(ps, bf_f, bf_s)
 
         num_clear_list[flat].append(cl[flat].num_clear)
 
         num_clear_list[slope].append(cl[slope].num_clear)
+        clearing_price.append(cl[slope].clearing_price)
 
+    colors = sns.color_palette()
 
     lole_calc = lambda irm: 0.1011 * np.power(irm, -49.01)
 
@@ -361,9 +364,45 @@ if __name__ == "__main__":
     # plt.title('accepted bids')
     plt.xlabel('Price')
     plt.ylabel('Units')
-    ax = f1.gca()
+    ax = f2.gca()
     handles, labels = ax.get_legend_handles_labels()
     ax.legend(handles, labels, loc=0)
+    # print(clearing_price)
+    net_cone = 123700
+    VOLL = 5000*24 / net_cone
+    # VOLL = 5000*2.4 / net_cone
 
 
+    print(colors)
+    f3 = plt.figure(3)
+
+    sns.set_palette('deep')
+    colors = sns.color_palette()
+    cur_color = colors[0]
+    cur_factor = 1
+    extra_label = '- VOLL 5K'
+    plt.plot(p, lole_list[slope] * VOLL * cur_factor + np.array(clearing_price)*np.array(num_clear_list[slope]), label='slope'+extra_label, c=cur_color)
+    plt.plot(p, lole_list[flat] * VOLL * cur_factor + p*num_clear_list[flat], ls='--', label='flat'+extra_label, c=cur_color)
+
+    cur_color = colors[1]
+    cur_factor = 1.8
+    extra_label = '- VOLL 9K'
+    plt.plot(p, lole_list[slope] * VOLL * cur_factor + np.array(clearing_price)*np.array(num_clear_list[slope]), label='slope'+extra_label, c=cur_color)
+    plt.plot(p, lole_list[flat] * VOLL * cur_factor + p*num_clear_list[flat], ls='--', label='flat'+extra_label, c=cur_color)
+
+    cur_color = colors[2]
+    cur_factor = 2.6
+    extra_label = '- VOLL 13K'
+    plt.plot(p, lole_list[slope] * VOLL * cur_factor + np.array(clearing_price)*np.array(num_clear_list[slope]), label='slope'+extra_label, c=cur_color)
+    plt.plot(p, lole_list[flat] * VOLL * cur_factor + p*num_clear_list[flat], ls='--', label='flat'+extra_label, c=cur_color)
+
+
+
+
+    # plt.title('accepted bids')
+    plt.xlabel('Price')
+    plt.ylabel('Total Cost, VOLL + Cap Payments')
+    ax = f3.gca()
+    handles, labels = ax.get_legend_handles_labels()
+    ax.legend(handles, labels, loc=0)
     plt.show()
