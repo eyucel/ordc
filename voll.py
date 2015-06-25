@@ -232,8 +232,8 @@ class container:
 
 def vollsim(ps, bf_f, bf_s):
     a = .1
-    n = 6
-    k = 3
+    n = 3
+    k = 2
 
     flat = container("flat")
     slope = container("slope")
@@ -329,8 +329,8 @@ if __name__ == "__main__":
     flat = 1
     num_clear_list=[[], []]
     lole_list = [None, None]
-    n = 6
-    k = 3
+    n = 3
+    k = 2
     bf_f = solve_opt(n, k)
     bf_s = bidf
     clearing_price = []
@@ -345,9 +345,9 @@ if __name__ == "__main__":
     colors = sns.color_palette()
 
     lole_calc = lambda irm: 0.1011 * np.power(irm, -49.01)
-
-    lole_list[flat] = lole_calc(0.97 + np.array(num_clear_list[flat])/100)
-    lole_list[slope] = lole_calc(0.97 + np.array(num_clear_list[slope])/100)
+    init_irm = 0.98
+    lole_list[flat] = lole_calc(init_irm + np.array(num_clear_list[flat])/100)
+    lole_list[slope] = lole_calc(init_irm + np.array(num_clear_list[slope])/100)
     f1 = plt.figure(1)
     plt.plot(p, num_clear_list[slope], label='slope')
     plt.plot(p, num_clear_list[flat], label='flat')
@@ -385,14 +385,14 @@ if __name__ == "__main__":
     plt.plot(p, lole_list[flat] * VOLL * cur_factor + p*num_clear_list[flat], ls='--', label='flat'+extra_label, c=cur_color)
 
     cur_color = colors[1]
-    cur_factor = 1.8
-    extra_label = '- VOLL 9K'
+    cur_factor = 10
+    extra_label = '- VOLL 25K'
     plt.plot(p, lole_list[slope] * VOLL * cur_factor + np.array(clearing_price)*np.array(num_clear_list[slope]), label='slope'+extra_label, c=cur_color)
     plt.plot(p, lole_list[flat] * VOLL * cur_factor + p*num_clear_list[flat], ls='--', label='flat'+extra_label, c=cur_color)
 
     cur_color = colors[2]
-    cur_factor = 2.6
-    extra_label = '- VOLL 13K'
+    cur_factor = 20
+    extra_label = '- VOLL 50K'
     plt.plot(p, lole_list[slope] * VOLL * cur_factor + np.array(clearing_price)*np.array(num_clear_list[slope]), label='slope'+extra_label, c=cur_color)
     plt.plot(p, lole_list[flat] * VOLL * cur_factor + p*num_clear_list[flat], ls='--', label='flat'+extra_label, c=cur_color)
 
