@@ -324,7 +324,7 @@ def vollsim(ps, bf_f, bf_s):
 if __name__ == "__main__":
     p = np.linspace(0.01, 0.99, num=99, endpoint=True)
     # sns.set_context("poster", font_scale=1.5, rc={"lines.linewidth": 2.5})
-
+    sns.set_palette('cubehelix')
     slope = 0
     flat = 1
     num_clear_list=[[], []]
@@ -376,25 +376,25 @@ if __name__ == "__main__":
     print(colors)
     f3 = plt.figure(3)
 
-    sns.set_palette('deep')
+    sns.set_palette('cubehelix')
     colors = sns.color_palette()
     cur_color = colors[0]
     cur_factor = 1
     extra_label = '- VOLL 5K'
-    plt.plot(p, lole_list[slope] * VOLL * cur_factor + np.array(clearing_price)*np.array(num_clear_list[slope]), label='slope'+extra_label, c=cur_color)
-    plt.plot(p, lole_list[flat] * VOLL * cur_factor + p*num_clear_list[flat], ls='--', label='flat'+extra_label, c=cur_color)
+    plt.plot(p, lole_list[slope] * VOLL * cur_factor + np.array(clearing_price)*np.array(num_clear_list[slope]), c=cur_color, label='slope'+extra_label)
+    plt.plot(p, lole_list[flat] * VOLL * cur_factor + p*num_clear_list[flat], c=cur_color, ls='--', label='flat'+extra_label)
 
     cur_color = colors[1]
     cur_factor = 10
     extra_label = '- VOLL 25K'
-    plt.plot(p, lole_list[slope] * VOLL * cur_factor + np.array(clearing_price)*np.array(num_clear_list[slope]), label='slope'+extra_label, c=cur_color)
-    plt.plot(p, lole_list[flat] * VOLL * cur_factor + p*num_clear_list[flat], ls='--', label='flat'+extra_label, c=cur_color)
+    plt.plot(p, lole_list[slope] * VOLL * cur_factor + np.array(clearing_price)*np.array(num_clear_list[slope]), c=cur_color, label='slope'+extra_label)
+    plt.plot(p, lole_list[flat] * VOLL * cur_factor + p*num_clear_list[flat], c=cur_color, ls='--', label='flat'+extra_label)
 
     cur_color = colors[2]
     cur_factor = 20
     extra_label = '- VOLL 50K'
-    plt.plot(p, lole_list[slope] * VOLL * cur_factor + np.array(clearing_price)*np.array(num_clear_list[slope]), label='slope'+extra_label, c=cur_color)
-    plt.plot(p, lole_list[flat] * VOLL * cur_factor + p*num_clear_list[flat], ls='--', label='flat'+extra_label, c=cur_color)
+    plt.plot(p, lole_list[slope] * VOLL * cur_factor + np.array(clearing_price)*np.array(num_clear_list[slope]), c=cur_color, label='slope'+extra_label)
+    plt.plot(p, lole_list[flat] * VOLL * cur_factor + p*num_clear_list[flat], c=cur_color, ls='--', label='flat'+extra_label)
 
 
 
