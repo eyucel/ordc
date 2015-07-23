@@ -14,6 +14,8 @@ import seaborn as sns
 # import matplotlib as mpl
 # mpl.rcParams['font.family'] = 'Arial'
 np.random.seed()
+sns.set_context("paper", font_scale=1.75, rc={"lines.linewidth": 2.5})
+sns.set_palette(sns.cubehelix_palette(8,light=.7))
 
 def bidf(c, n, a):
     # num1 = (a*a)* (-1 + n) * lambertw(-np.exp((2 * (-1 + c) + a * (-1 + n) * (-4 + a + 4 * c - 2 * a * c + 2 * a * (-1 + c) * n))/(a*a * (n-1))))
@@ -324,7 +326,9 @@ def vollsim(ps, bf_f, bf_s):
 if __name__ == "__main__":
     p = np.linspace(0.01, 0.99, num=99, endpoint=True)
     # sns.set_context("poster", font_scale=1.5, rc={"lines.linewidth": 2.5})
-    sns.set_palette('cubehelix')
+    # sns.set_palette('cubehelix')
+    sns.set_context("paper", font_scale=1.75, rc={"lines.linewidth": 2.5})
+    sns.set_palette(sns.cubehelix_palette(8,light=.7))
     slope = 0
     flat = 1
     num_clear_list=[[], []]
@@ -376,7 +380,7 @@ if __name__ == "__main__":
     print(colors)
     f3 = plt.figure(3)
 
-    sns.set_palette('cubehelix')
+    # sns.set_palette('cubehelix')
     colors = sns.color_palette()
     cur_color = colors[0]
     cur_factor = 1
@@ -405,4 +409,5 @@ if __name__ == "__main__":
     ax = f3.gca()
     handles, labels = ax.get_legend_handles_labels()
     ax.legend(handles, labels, loc=0)
+    f3.savefig("voll_auction_costs_97.pdf",bbox_inches='tight')
     plt.show()
