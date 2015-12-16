@@ -995,15 +995,34 @@ def reportn2():
     ax.legend(handles, labels, loc=0)
     ax.axis([0, 1, 0, 1])
     f7.savefig("n_win_prob.pdf",bbox_inches='tight')
-
     plt.show()
 
 if __name__ == "__main__":
 
-    reportsingle()
-    reportk2()
-    reportn2()
-    report2()
+    # reportsingle()
+    # reportk2()
+    # reportn2()
+    # report2()
+
+    # IRM = [0.97, 0.99, 1, 1.01, 1.05]
+    # LOLE = [0.4, 0.2, 0.1, 0.06, 0.009]
+    # lole_calc = lambda irm: 0.1011 * np.power(irm, -49.01)
+    # t = np.linspace(.965,1.055,endpoint=True)
+    # d = np.vstack((LOLE,IRM)).T
+    # # d[:,0] = np.log(LOLE)
+    # # d[:,1] = IRM
+    # print(d)
+    # d = pd.DataFrame(data={'LOLE':LOLE, 'IRM':IRM})
+    # print(d)
+    # # sns.regplot(x="IRM", y="LOLE",data=d,logx=True)
+    # plt.plot(t,lole_calc(t),label="0.1011 x^-49.01")
+    # plt.plot(IRM, LOLE, '.', markersize=16)
+    # plt.xlabel("IRM")
+    # plt.ylabel("LOLE")
+    # plt.legend()
+    # plt.savefig("IRM_reg.pdf",bbox_inches='tight')
+    # plt.show()
+    #
 
 
     t = np.linspace(0,1)
@@ -1026,4 +1045,3 @@ if __name__ == "__main__":
     plt.savefig("curve_intersect.pdf",bbox_inches='tight')
 
     plt.show()
-

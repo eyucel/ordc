@@ -11,11 +11,13 @@ from scipy.special import beta
 from scipy.special import lambertw
 import mpmath as mp
 import seaborn as sns
-# import matplotlib as mpl
+import matplotlib as mpl
+
 # mpl.rcParams['font.family'] = 'Arial'
 np.random.seed()
 sns.set_context("paper", font_scale=1.75, rc={"lines.linewidth": 2.5})
-sns.set_palette(sns.cubehelix_palette(8,light=.7))
+sns.set_palette(sns.cubehelix_palette(6,reverse=True))
+mpl.rcParams['svg.fonttype'] = 'none'
 
 def bidf(c, n, a):
     # num1 = (a*a)* (-1 + n) * lambertw(-np.exp((2 * (-1 + c) + a * (-1 + n) * (-4 + a + 4 * c - 2 * a * c + 2 * a * (-1 + c) * n))/(a*a * (n-1))))
@@ -27,6 +29,13 @@ def bidf(c, n, a):
 
     y = np.where(w<0, 0, w)
     return y
+
+def honest_bid(c):
+    a = 0.39
+    b = 1.1
+    m = (b-a)
+    return m*c + a
+
 
 def flex(c,y,n,k):
     j = n-1
@@ -234,8 +243,8 @@ class container:
 
 def vollsim(ps, bf_f, bf_s):
     a = .1
-    n = 3
-    k = 2
+    n = 5
+    k = 3
 
     flat = container("flat")
     slope = container("slope")
@@ -244,6 +253,8 @@ def vollsim(ps, bf_f, bf_s):
     flat.bf = bf_f
     slope.bf = bf_s
     flat.p = np.array(k*[ps]+(n-k)*[-1])
+    flat.p = np.array([ps-i*a for i in range(0, n)])
+    flat.p = np.where(flat.p < 0, 0, flat.p)
     # print(flat.p)
     slope.p = np.array([ps-i*a for i in range(0, n)])
     slope.p = np.where(slope.p < 0, 0, slope.p)
@@ -313,6 +324,10 @@ def vollsim(ps, bf_f, bf_s):
         c.profit = np.mean(c.maskany * (c.p[c.num_clearing-1]-costs[:,0]), axis=0)
         c.num_clear = np.mean(c.num_clearing)
         c.clearing_price = np.mean((c.num_clearing>0) * c.p[c.num_clearing-1])
+
+        c.pay_as_bid_cost = np.mean(np.sum(c.p_clearing*c.sorted_bids, axis=1))
+
+
         c.avg_bid = np.mean((c.num_clearing >0)*c.sorted_bids[:, 0])
     return container_list
     # return np.mean(maskany), np.mean(maskany * (p[num_clearing-1]-costs[:,0]), axis=0), np.mean(num_clearing), np.mean((num_clearing>0) * p[num_clearing-1]),op, np.mean((num_clearing >0)*sorted_bids[:, 0])
@@ -328,14 +343,15 @@ if __name__ == "__main__":
     # sns.set_context("poster", font_scale=1.5, rc={"lines.linewidth": 2.5})
     # sns.set_palette('cubehelix')
     sns.set_context("paper", font_scale=1.75, rc={"lines.linewidth": 2.5})
-    sns.set_palette(sns.cubehelix_palette(8,light=.7))
+    sns.set_palette(sns.cubehelix_palette(4,reverse=True))
     slope = 0
     flat = 1
     num_clear_list=[[], []]
     lole_list = [None, None]
-    n = 3
-    k = 2
+    n = 5
+    k = 3
     bf_f = solve_opt(n, k)
+    bf_f = honest_bid
     bf_s = bidf
     clearing_price = []
     for ps in p:
@@ -349,7 +365,7 @@ if __name__ == "__main__":
     colors = sns.color_palette()
 
     lole_calc = lambda irm: 0.1011 * np.power(irm, -49.01)
-    init_irm = 0.98
+    init_irm = 0.97
     lole_list[flat] = lole_calc(init_irm + np.array(num_clear_list[flat])/100)
     lole_list[slope] = lole_calc(init_irm + np.array(num_clear_list[slope])/100)
     f1 = plt.figure(1)
@@ -385,20 +401,23 @@ if __name__ == "__main__":
     cur_color = colors[0]
     cur_factor = 1
     extra_label = '- VOLL 5K'
-    plt.plot(p, lole_list[slope] * VOLL * cur_factor + np.array(clearing_price)*np.array(num_clear_list[slope]), c=cur_color, label='slope'+extra_label)
-    plt.plot(p, lole_list[flat] * VOLL * cur_factor + p*num_clear_list[flat], c=cur_color, ls='--', label='flat'+extra_label)
+    plt.plot(p, lole_list[slope] * VOLL * cur_factor + np.array(clearing_price)*np.array(num_clear_list[slope]), color=cur_color, label='slope'+extra_label)
+    # plt.plot(p, lole_list[flat] * VOLL * cur_factor + p*num_clear_list[flat], color=cur_color, ls='--', label='flat'+extra_label)
+    plt.plot(p, lole_list[flat] * VOLL * cur_factor + cl[flat].pay_as_bid_cost, color=cur_color, ls='--', label='flat'+extra_label)
 
     cur_color = colors[1]
     cur_factor = 10
     extra_label = '- VOLL 25K'
-    plt.plot(p, lole_list[slope] * VOLL * cur_factor + np.array(clearing_price)*np.array(num_clear_list[slope]), c=cur_color, label='slope'+extra_label)
-    plt.plot(p, lole_list[flat] * VOLL * cur_factor + p*num_clear_list[flat], c=cur_color, ls='--', label='flat'+extra_label)
+    plt.plot(p, lole_list[slope] * VOLL * cur_factor + np.array(clearing_price)*np.array(num_clear_list[slope]), color=cur_color, label='slope'+extra_label)
+    # plt.plot(p, lole_list[flat] * VOLL * cur_factor + p*num_clear_list[flat], color=cur_color, ls='--', label='flat'+extra_label)
+    plt.plot(p, lole_list[flat] * VOLL * cur_factor + cl[flat].pay_as_bid_cost, color=cur_color, ls='--', label='flat'+extra_label)
 
     cur_color = colors[2]
     cur_factor = 20
     extra_label = '- VOLL 50K'
-    plt.plot(p, lole_list[slope] * VOLL * cur_factor + np.array(clearing_price)*np.array(num_clear_list[slope]), c=cur_color, label='slope'+extra_label)
-    plt.plot(p, lole_list[flat] * VOLL * cur_factor + p*num_clear_list[flat], c=cur_color, ls='--', label='flat'+extra_label)
+    plt.plot(p, lole_list[slope] * VOLL * cur_factor + np.array(clearing_price)*np.array(num_clear_list[slope]), color=cur_color, label='slope'+extra_label)
+    # plt.plot(p, lole_list[flat] * VOLL * cur_factor + p*num_clear_list[flat], color=cur_color, ls='--', label='flat'+extra_label)
+    plt.plot(p, lole_list[flat] * VOLL * cur_factor + cl[flat].pay_as_bid_cost, color=cur_color, ls='--', label='flat'+extra_label)
 
 
 
@@ -409,5 +428,5 @@ if __name__ == "__main__":
     ax = f3.gca()
     handles, labels = ax.get_legend_handles_labels()
     ax.legend(handles, labels, loc=0)
-    f3.savefig("voll_auction_costs_97.pdf",bbox_inches='tight')
+    f3.savefig("voll_auction_costs_97.png",bbox_inches='tight')
     plt.show()
