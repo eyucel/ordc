@@ -8,14 +8,16 @@ from scipy.interpolate import interp1d
 # from scipy.special import betainc
 from scipy.special import beta
 from scipy.special import lambertw
+import time
+
 import mpmath as mp
 import seaborn as sns
-# import matplotlib as mpl
+import matplotlib as mpl
 # mpl.rcParams['font.family'] = 'Arial'
 np.random.seed()
 sns.set_context("paper", font_scale=1.75, rc={"lines.linewidth": 2.5})
-sns.set_palette(sns.cubehelix_palette(8,light=.7))
-
+sns.set_palette(sns.cubehelix_palette(5, reverse=True))
+mpl.rcParams['svg.fonttype'] = 'none'
 # sns.set(font="Arial")
 def bidf(c, n, a):
     # num1 = (a*a)* (-1 + n) * lambertw(-np.exp((2 * (-1 + c) + a * (-1 + n) * (-4 + a + 4 * c - 2 * a * c + 2 * a * (-1 + c) * n))/(a*a * (n-1))))
@@ -166,7 +168,6 @@ def simulate(ps, f,n,k):
 def simulate2(ps, f,n,a):
     M = 200000
 
-
     # own_idx = np.random.random_integers(0,n-1,size=(M,1))
     # generate random bids
     costs = np.random.rand(M, n)
@@ -221,15 +222,20 @@ def simulate2(ps, f,n,a):
     # print(np.mean(maskany))
     # print(sorted_bids.shape)
     # print(num_clearing.shape)
-    q = np.arange(0,M,dtype=int)
+    q = np.arange(0, M, dtype=int)
     # print(sorted_bids[q, num_clearing])
 
     #overpayment
-    op = np.mean((num_clearing>0)*(p[num_clearing-1]-sorted_bids[q,num_clearing-1]))
+    op = np.mean((num_clearing > 0)*(p[num_clearing-1]-sorted_bids[q, num_clearing-1]))
 
 
     # retrun  m, s, nc, pp, op, ab
-    return np.mean(maskany), np.mean(maskany * (p[num_clearing-1]-costs[:,0]), axis=0), np.mean(num_clearing), np.mean((num_clearing>0) * p[num_clearing-1]),op, np.mean((num_clearing >0)*sorted_bids[:, 0])
+    return (np.mean(maskany),  # individual probability of winning
+           np.mean(maskany * (p[num_clearing-1]-costs[:, 0]), axis=0),  # avg profit to bidder
+           np.mean(num_clearing),  # average number clearing
+           np.mean((num_clearing > 0) * p[num_clearing-1]),  # avg clearing price
+           op,
+           np.mean((num_clearing > 0)*sorted_bids[:, 0]))  # avg lowest bid)
 
     # print(sum(mask)/M)r
 
@@ -295,6 +301,8 @@ def avg_winning_bid():
     plt.show()
 
 def report2():
+
+    file_time = time.strftime("%Y%H%M%S")
     bf = None
     n = 3
     # bf = solve_opt(n, k)
@@ -315,17 +323,19 @@ def report2():
         m_list = []
         s_list = []
         nc_list = []
-        p_list = []
+        cp_list = []
         op_list = []
         ab_list=[]
         p = np.linspace(0.01, 0.99, num=100)
         for ps in p:
             m, s, nc, pp, op, ab = simulate2(ps, bf, n, a)
+            # print(pp, ab)
+            # input()
             m_list.append(m)
             # print(s)
             s_list.append(s)
             nc_list.append(nc)
-            p_list.append(pp)
+            cp_list.append(pp)
             op_list.append(op)
             ab_list.append(ab)
         #########################
@@ -380,7 +390,7 @@ def report2():
         ########################
 
         f5 = plt.figure(5)
-        plt.plot(p, ab_list, label='n='+str(n))
+        plt.plot(p, cp_list, label='n='+str(n))
         # plt.title('Avg Clearing Price')
         plt.xlabel('Initial Price')
         plt.ylabel('Final Clearing Price')
@@ -411,31 +421,31 @@ def report2():
     handles, labels = ax.get_legend_handles_labels()
     ax.legend(handles, labels, loc=0)
     ax.axis([0, 1, 0, 4])
-    f2.savefig('desc_units.pdf',bbox_inches='tight')
+    f2.savefig("desc_units_"+file_time+".pdf",bbox_inches='tight')
 
     ax = f4.gca()
     handles, labels = ax.get_legend_handles_labels()
     ax.legend(handles, labels, loc=0)
     ax.axis([0, 1, 0, 1])
-    f4.savefig("desc_bf.pdf",bbox_inches='tight')
+    f4.savefig("desc_bf_"+file_time+".pdf",bbox_inches='tight')
 
     ax = f5.gca()
     handles, labels = ax.get_legend_handles_labels()
     ax.legend(handles, labels, loc=0)
     ax.axis([0, 1, 0, 1])
-    f5.savefig("desc_clearing_price.pdf",bbox_inches='tight')
+    f5.savefig("desc_clearing_price_"+file_time+".pdf",bbox_inches='tight')
 
     ax = f6.gca()
     handles, labels = ax.get_legend_handles_labels()
     ax.legend(handles, labels, loc=0)
     ax.axis([0, 1, 0, 1])
-    f6.savefig("desc_overpayment.pdf",bbox_inches='tight')
+    f6.savefig("desc_overpayment_"+file_time+".pdf",bbox_inches='tight')
 
     ax = f7.gca()
     handles, labels = ax.get_legend_handles_labels()
     ax.legend(handles, labels, loc=0)
     ax.axis([0, 1, 0, 1])
-    f7.savefig("desc_win_prob.pdf",bbox_inches='tight')
+    f7.savefig("desc_win_prob_"+file_time+".pdf",bbox_inches='tight')
     plt.show()
 
 def report():
@@ -985,12 +995,35 @@ def reportn2():
     ax.legend(handles, labels, loc=0)
     ax.axis([0, 1, 0, 1])
     f7.savefig("n_win_prob.pdf",bbox_inches='tight')
+
     plt.show()
 
 if __name__ == "__main__":
 
-    # reportsingle()
-    # reportk2()
-    # reportn2()
+    reportsingle()
+    reportk2()
+    reportn2()
     report2()
+
+
+    t = np.linspace(0,1)
+
+    plt.plot(t, 1-t)
+    bid_line_x = [0,.1,.1,.3,.3,.5,.5,.7,.7,.9,.9]
+    bid_line_y = [0,0,.1,.1,.3,.3,.45,.45,.7,.7,10]
+    plt.plot(bid_line_x,bid_line_y)
+    plt.plot((0,.3),(.7,.7),linestyle='--',color='k',linewidth=1)
+    plt.plot((0,.5),(.5,.5),linestyle='--',color='k',linewidth=1)
+    plt.plot((0,.7),(.3,.3),linestyle='--',color='k',linewidth=1)
+
+    plt.axis([0,1,0,1])
+    plt.gca().set_xticks([.1,.3,.5,.7,.9])
+    plt.gca().set_xticklabels(['0','1','2','3','4'])
+    plt.gca().set_yticks([.3,.5,.7])
+    plt.gca().set_yticklabels(['p-2a','p-a','p'])
+    plt.ylabel('Capacity Price')
+    plt.xlabel('Capacity Addition')
+    plt.savefig("curve_intersect.pdf",bbox_inches='tight')
+
+    plt.show()
 
