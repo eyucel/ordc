@@ -2,7 +2,7 @@ __author__ = 'Emre'
 __author__ = 'msbcg452'
 import numpy as np
 from scipy.integrate import ode
-from matplotlib import pyplot as plt
+import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 # from scipy.special import gamma
 # from scipy.special import hyp2f1
@@ -394,7 +394,7 @@ if __name__ == "__main__":
 
 
     print(colors)
-    f3 = plt.figure(3)
+    f3 = plt.figure(3,figsize=(9, 6))
 
     # sns.set_palette('cubehelix')
     colors = sns.color_palette()
@@ -403,21 +403,21 @@ if __name__ == "__main__":
     extra_label = '- VOLL 5K'
     plt.plot(p, lole_list[slope] * VOLL * cur_factor + np.array(clearing_price)*np.array(num_clear_list[slope]), color=cur_color, label='slope'+extra_label)
     # plt.plot(p, lole_list[flat] * VOLL * cur_factor + p*num_clear_list[flat], color=cur_color, ls='--', label='flat'+extra_label)
-    plt.plot(p, lole_list[flat] * VOLL * cur_factor + cl[flat].pay_as_bid_cost, color=cur_color, ls='--', label='flat'+extra_label)
+    plt.plot(p, lole_list[flat] * VOLL * cur_factor + cl[flat].pay_as_bid_cost, color=cur_color, ls='--', label='pab'+extra_label)
 
     cur_color = colors[1]
     cur_factor = 10
     extra_label = '- VOLL 25K'
     plt.plot(p, lole_list[slope] * VOLL * cur_factor + np.array(clearing_price)*np.array(num_clear_list[slope]), color=cur_color, label='slope'+extra_label)
     # plt.plot(p, lole_list[flat] * VOLL * cur_factor + p*num_clear_list[flat], color=cur_color, ls='--', label='flat'+extra_label)
-    plt.plot(p, lole_list[flat] * VOLL * cur_factor + cl[flat].pay_as_bid_cost, color=cur_color, ls='--', label='flat'+extra_label)
+    plt.plot(p, lole_list[flat] * VOLL * cur_factor + cl[flat].pay_as_bid_cost, color=cur_color, ls='--', label='pab'+extra_label)
 
     cur_color = colors[2]
     cur_factor = 20
     extra_label = '- VOLL 50K'
     plt.plot(p, lole_list[slope] * VOLL * cur_factor + np.array(clearing_price)*np.array(num_clear_list[slope]), color=cur_color, label='slope'+extra_label)
     # plt.plot(p, lole_list[flat] * VOLL * cur_factor + p*num_clear_list[flat], color=cur_color, ls='--', label='flat'+extra_label)
-    plt.plot(p, lole_list[flat] * VOLL * cur_factor + cl[flat].pay_as_bid_cost, color=cur_color, ls='--', label='flat'+extra_label)
+    plt.plot(p, lole_list[flat] * VOLL * cur_factor + cl[flat].pay_as_bid_cost, color=cur_color, ls='--', label='pab'+extra_label)
 
 
 
@@ -428,5 +428,5 @@ if __name__ == "__main__":
     ax = f3.gca()
     handles, labels = ax.get_legend_handles_labels()
     ax.legend(handles, labels, loc=0)
-    f3.savefig("voll_auction_costs_97.png",bbox_inches='tight')
+    f3.savefig("voll_auction_costs_97_pab.png",bbox_inches='tight')
     plt.show()
