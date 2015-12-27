@@ -9,7 +9,7 @@ from scipy.interpolate import interp1d
 from scipy.special import beta
 from scipy.special import lambertw
 import time
-
+import pandas as pd
 import mpmath as mp
 import seaborn as sns
 import matplotlib as mpl
@@ -1004,44 +1004,44 @@ if __name__ == "__main__":
     # reportn2()
     # report2()
 
-    # IRM = [0.97, 0.99, 1, 1.01, 1.05]
-    # LOLE = [0.4, 0.2, 0.1, 0.06, 0.009]
-    # lole_calc = lambda irm: 0.1011 * np.power(irm, -49.01)
-    # t = np.linspace(.965,1.055,endpoint=True)
-    # d = np.vstack((LOLE,IRM)).T
-    # # d[:,0] = np.log(LOLE)
-    # # d[:,1] = IRM
-    # print(d)
-    # d = pd.DataFrame(data={'LOLE':LOLE, 'IRM':IRM})
-    # print(d)
-    # # sns.regplot(x="IRM", y="LOLE",data=d,logx=True)
-    # plt.plot(t,lole_calc(t),label="0.1011 x^-49.01")
-    # plt.plot(IRM, LOLE, '.', markersize=16)
-    # plt.xlabel("IRM")
-    # plt.ylabel("LOLE")
-    # plt.legend()
-    # plt.savefig("IRM_reg.pdf",bbox_inches='tight')
-    # plt.show()
-    #
-
-
-    t = np.linspace(0,1)
-
-    plt.plot(t, 1-t)
-    bid_line_x = [0,.1,.1,.3,.3,.5,.5,.7,.7,.9,.9]
-    bid_line_y = [0,0,.1,.1,.3,.3,.45,.45,.7,.7,10]
-    plt.plot(bid_line_x,bid_line_y)
-    plt.plot((0,.3),(.7,.7),linestyle='--',color='k',linewidth=1)
-    plt.plot((0,.5),(.5,.5),linestyle='--',color='k',linewidth=1)
-    plt.plot((0,.7),(.3,.3),linestyle='--',color='k',linewidth=1)
-
-    plt.axis([0,1,0,1])
-    plt.gca().set_xticks([.1,.3,.5,.7,.9])
-    plt.gca().set_xticklabels(['0','1','2','3','4'])
-    plt.gca().set_yticks([.3,.5,.7])
-    plt.gca().set_yticklabels(['p-2a','p-a','p'])
-    plt.ylabel('Capacity Price')
-    plt.xlabel('Capacity Addition')
-    plt.savefig("curve_intersect.pdf",bbox_inches='tight')
-
+    IRM = [0.97, 0.99, 1, 1.01, 1.05]
+    LOLE = [0.4, 0.2, 0.1, 0.06, 0.009]
+    lole_calc = lambda irm: 0.1011 * np.power(irm, -49.01)
+    t = np.linspace(.965,1.055,endpoint=True)
+    d = np.vstack((LOLE,IRM)).T
+    # d[:,0] = np.log(LOLE)
+    # d[:,1] = IRM
+    print(d)
+    d = pd.DataFrame(data={'LOLE':LOLE, 'IRM':IRM})
+    print(d)
+    # sns.regplot(x="IRM", y="LOLE",data=d,logx=True)
+    plt.plot(t,lole_calc(t),label="0.1011 x^-49.01")
+    plt.plot(IRM, LOLE, '.', markersize=16)
+    plt.xlabel("IRM")
+    plt.ylabel("LOLE")
+    plt.legend()
+    plt.savefig("IRM_reg.pdf",bbox_inches='tight')
     plt.show()
+
+
+    #
+    # t = np.linspace(0,1)
+    #
+    # plt.plot(t, 1-t)
+    # bid_line_x = [0,.1,.1,.3,.3,.5,.5,.7,.7,.9,.9]
+    # bid_line_y = [0,0,.1,.1,.3,.3,.45,.45,.7,.7,10]
+    # plt.plot(bid_line_x,bid_line_y)
+    # plt.plot((0,.3),(.7,.7),linestyle='--',color='k',linewidth=1)
+    # plt.plot((0,.5),(.5,.5),linestyle='--',color='k',linewidth=1)
+    # plt.plot((0,.7),(.3,.3),linestyle='--',color='k',linewidth=1)
+    #
+    # plt.axis([0,1,0,1])
+    # plt.gca().set_xticks([.1,.3,.5,.7,.9])
+    # plt.gca().set_xticklabels(['0','1','2','3','4'])
+    # plt.gca().set_yticks([.3,.5,.7])
+    # plt.gca().set_yticklabels(['p-2a','p-a','p'])
+    # plt.ylabel('Capacity Price')
+    # plt.xlabel('Capacity Addition')
+    # plt.savefig("curve_intersect.pdf",bbox_inches='tight')
+    #
+    # plt.show()
