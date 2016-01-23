@@ -2,64 +2,53 @@ __author__ = 'msbcg452'
 
 import numpy as np
 import matplotlib.pyplot as mpl
+import scipy.stats
+import scipy.integrate
+import scipy.optimize
+
+# def payoff(w, c, p):
+#     return (p-c)*(w < p)*np.sum(w<opponent_bid)*price_pdf(p)
+
+
 
 def eval_player(cost_range, p_matrix, w1_matrix, opponent_bid):
-    # p_matrix = np.tile(p_range, (w_res, 1))
-    c2_res = opponent_bid.size
-    # w1_matrix = np.tile(w_range, (c2_res, 1)).T
-    w2_matrix = np.tile(opponent_bid, (w_res, 1))
-    # print(opponent_bid)
-    # print(w1_matrix)
-    # print(w2_matrix)
-    w1_w2 = w1_matrix - w2_matrix
-    w2_w1 = w2_matrix - w1_matrix
-    f1_tie_break_matrix = np.where(w1_w2 < 0, 1, 0)
-    f1_tie_break_matrix = np.where(w1_w2 == 0, 1/2, f1_tie_break_matrix)
-    # print(f1_tie_break_matrix)
+    def payoff(w, c, p):
+        return (p-c)*(w < p)*cost_pdf(c)*price_pdf(p)
+        # return (p-c)*(w < p)*np.sum(w < opponent_bid)/np.size(opponent_bid)*price_pdf(p)
+    opt_list = []
+    for c in cost_range:
+        G = lambda w: -scipy.integrate.quad(lambda p: payoff(w, c, p), 0, 1.5)[0]
+        # print(G(0))
+        res = scipy.optimize.minimize_scalar(G)
+        opt_list.append(res.x)
+        # print(c)
+        # print(res.x)
+    return np.array(opt_list)
 
-    f1_price_clear_matrix = np.tile(w_range, (p_res, 1)).T <= p_matrix # price on columns
-    # print(f1_price_clear_matrix)
-    win_prob1 = np.mean(f1_tie_break_matrix, axis=1)
-    # print(win_prob1)
-    w = []
-    for cost in cost_range:
-        # print(cost)
-        x = p_matrix - cost # payoffs (price on columns)
-        # print(x)
-        xx = f1_price_clear_matrix * x
-        # print(xx)
-        # print(xx*win_prob1[:,np.newaxis])
-        # xxx = np.average(xx, axis=1) # find average payoff
-        # print(xxx)
-        # f1_payoffs = win_prob1 * xxx
-        # print(f1_payoffs)
 
-        # print(xx*win_prob1)
-        f1_payoffs = np.average(xx*win_prob1[:, np.newaxis], axis=1) #better correct way
-        pos1 = np.argmax(f1_payoffs)
-        print(f1_payoffs)
-        # print(f1_payoffs)
-        # print(cost, pos1)
-        # print(f1_payoffs)
-        w.append(w_range[pos1])
-    return np.array(w)
-
-c1_res = 500
-c2_res = 500
+c1_res = 100
+c2_res = 100
 p_res = 500
 w_res = 500
 
-c1_range = np.linspace(0.4, 1, c1_res)
-c2_range = np.linspace(0.4, 1, c2_res)
-p2_range = np.linspace(0, 1.5, p_res)
-w_range  = np.linspace(0, 1.5, w_res)
+a = 0
+b = 1
+s = 0
+t = 1
+
+c1_range = np.linspace(s, t, c1_res)
+c2_range = np.linspace(s, t, c2_res)
+p2_range = np.linspace(a, b, p_res)
+w_range  = np.linspace(a, b, w_res)
 opt_w1 = np.copy(c1_range)
-p_range =  np.linspace(0, 1.5, p_res)
-w2_range = np.linspace(0, 1.5, w_res)
+p_range =  np.linspace(a, b, p_res)
+w2_range = np.linspace(a, b, w_res)
 opt_w2 = np.copy(c2_range)
 p_matrix = np.tile(p_range, (w_res, 1))
 print(w_range)
 print(c1_range)
+price_pdf = lambda x: scipy.stats.uniform.pdf(x, loc=a, scale=b-a)
+cost_pdf = lambda x: scipy.stats.uniform.pdf(x, loc=s, scale=t-s)
 # f1_payoffs = np.zeros((p_res, p_res))
 # f2_payoffs = np.zeros((p_res, p_res))
 # # print(p1_range)
@@ -106,7 +95,7 @@ while (tol1+tol2) > eps:
     # # print(opt_w2)
     # # f1 = mpl.figure()
 mpl.plot(c1_range, opt_w1)
-mpl.axis([0.8,1.2,0,1.5])
+mpl.axis([s, t, a, b])
 # mpl.plot(c2_range, opt_w2)
 mpl.show()
 print(opt_w1[0],opt_w1[-1])
