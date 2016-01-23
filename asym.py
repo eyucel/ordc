@@ -1,9 +1,20 @@
 import numpy as np
 
+npt = 1001
+ngrid = 60
+ko = 6
+nko = npt + ko
+nq = 200
+told = 1e-3
+ftol = 1e-6
+
+
 aucpro = 1
 n = 3 # number of h-types
 big_J = 2 # taylor series order expansion
 nt = 200 # of grid points
+
+
 
 k = np.zeros(n)
 u = np.zeros(n)
@@ -67,3 +78,15 @@ bb = musd[:, 1]
 qcdf[0, :] = np.array([1, 0, 0])
 qcdf[1, :] = np.array([0, 1, 0])
 qcdf[2, :] = np.array([0, 0, 1])
+
+# equal spaced grid for inverse cdf
+h = np.linspace(0, 1, npt)
+h1 = np.linspace(lv, uv, npt)
+
+bcf = np.zeros((n, npt))
+pcf = np.zeros((n, ko, npt))
+br = np.zeros((n, npt))
+bcf1 = np.zeros((n, npt))
+pcf1 = np.zeros((n, ko, npt))
+br1 = np.zeros((n, npt))
+
