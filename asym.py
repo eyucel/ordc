@@ -1,6 +1,11 @@
 import numpy as np
 import scipy.interpolate
 import scipy.stats
+import matplotlib.pyplot as plt
+
+
+
+
 npt = 1001
 ngrid = 60
 ko = 6
@@ -75,9 +80,9 @@ musd[1, :] = np.array([2, 1])
 musd[2, :] = np.array([3.39, 2.2])
 aa = musd[:, 0]
 bb = musd[:, 1]
-p1_dist = scipy.stats.weibull_min(musd[0, 0], musd[0, 1])
-p2_dist = scipy.stats.weibull_min(musd[1, 0], musd[1, 1])
-p3_dist = scipy.stats.weibull_min(musd[2, 0], musd[2, 1])
+p1_dist = scipy.stats.weibull_min(musd[0, 0], scale=musd[0, 1])
+p2_dist = scipy.stats.weibull_min(musd[1, 0], scale=musd[1, 1])
+p3_dist = scipy.stats.weibull_min(musd[2, 0], scale=musd[2, 1])
 
 
 qcdf[0, :] = np.array([1, 0, 0])
@@ -96,14 +101,46 @@ bcf1 = np.zeros((n, npt))
 pcf1 = np.zeros((n, ko, npt))
 br1 = np.zeros((n, npt))
 
-# p1_interp = scipy.interpolate.interp1d(h, p1_dist.ppf(h), kind=6) # create
-p1_spl = scipy.interpolate.splmake(h, p1_dist.ppf(h), order=ko, kind='not_a_knot') # create spline interpolation
-p1_pp = scipy.interpolate.spltopp(*p1_spl) # create piecewise polynomial of spl
+mod_ppf = lambda u: p1_dist.ppf(p1_dist.cdf(lv) + u * (p1_dist.cdf(uv)-p1_dist.cdf(lv)))
+p1_pp = scipy.interpolate.splrep(h, mod_ppf(h))
+plt.plot(h1, scipy.interpolate.splev(h, p1_pp))
 print(p1_pp)
-print(p1_spl)
+plt.show()
+plt.plot(h, p1_dist.ppf(h))
+plt.show()
+print(p1_pp)
+# print(p1_interp(np.linspace(0,1,50)))
+# print(p1_interp(h))
+# p1_spl = scipy.interpolate.splmake(h, p1_dist.ppf(h), order=3) # create spline interpolation
+# print(h)
+# print(p1_dist.ppf(h))
+# print(scipy.interpolate.spleval(p1_spl, h))
+# p1_pp = scipy.interpolate.PPoly.from_spline(p1_spl)
+# print(p1_pp(h))
+# # p1_pp = scipy.interpolate.spltopp(*p1_spl) # create piecewise polynomial of spl
+# print(p1_pp)
+# print(p1_spl)
 
 # p2_interp = scipy.interpolate.interp1d(h, p2_dist.ppf(h), kind=6)
 # p3_interp = scipy.interpolate.interp1d(h, p3_dist.ppf(h), kind=6)
 # p1_interp = scipy.interpolate.PiecewisePolynomial(h, p1_dist.ppf(h), orders=ko)
 # p2_interp = scipy.interpolate.PiecewisePolynomial(h, p2_dist.ppf(h), orders=ko)
 # p3_interp = scipy.interpolate.PiecewisePolynomial(h, p3_dist.ppf(h), orders=ko)
+
+t_grid = np.linspace(res, uv, ngrid)
+obj = np.zeros(ngrid)
+obj[0] = 1000
+obj[-1] = 1000
+
+def asym_recursion(tt):
+    t = np.linspace(tt, res, nt)
+
+
+
+
+
+for i in range(1, ngrid):
+    obj[i] = asym_recursion(t_grid[i])
+
+
+
