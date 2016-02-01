@@ -26,20 +26,20 @@ k = np.zeros(n)
 u = np.zeros(n)
 t = np.zeros(nt)
 Fres = np.zeros(n)
-a = np.zeros((n, big_J))
-b = np.zeros((n, big_J))
-c = np.zeros((n, big_J))
-d = np.zeros((n, big_J))
-p = np.zeros((n, big_J))
-q = np.zeros((n, big_J))
+a = np.zeros((n, big_J+1))
+b = np.zeros((n, big_J+1))
+c = np.zeros((n, big_J+1))
+d = np.zeros((n, big_J+1))
+p = np.zeros((n, big_J+1))
+q = np.zeros((n, big_J+1))
 l = np.zeros((n, nt))
 ll = np.zeros((n, nt))
 lpl = np.zeros((n, nt))
 check = np.zeros(n)
 bids = np.zeros((n, nt))
-biga = np.zeros((n,n))
+biga = np.zeros((n, n))
 p0 = np.zeros((n, nt))
-bigb = np.zeros((n,))
+bigb = np.zeros((n, 1))
 a1 = np.zeros((n, n))
 a2 = np.zeros((n, n))
 b1 = np.zeros((n, n))
@@ -80,6 +80,9 @@ musd[1, :] = np.array([2, 1])
 musd[2, :] = np.array([3.39, 2.2])
 aa = musd[:, 0]
 bb = musd[:, 1]
+
+dist_list = [scipy.stats.weibull_min(musd[i, 0], scale=musd[i, 1]) for i in range(0, n)]
+
 p1_dist = scipy.stats.weibull_min(musd[0, 0], scale=musd[0, 1])
 p2_dist = scipy.stats.weibull_min(musd[1, 0], scale=musd[1, 1])
 p3_dist = scipy.stats.weibull_min(musd[2, 0], scale=musd[2, 1])
@@ -100,15 +103,20 @@ br = np.zeros((n, npt))
 bcf1 = np.zeros((n, npt))
 pcf1 = np.zeros((n, ko, npt))
 br1 = np.zeros((n, npt))
-
+mod_cdf = lambda v: (p1_dist.cdf(v)-p1_dist.cdf(lv))/(p1_dist.cdf(uv)-p1_dist.cdf(lv))
+mod_cdf_list = [lambda v: (dist_list[i].cdf(v)-dist_list[i].cdf(lv))/(dist_list[i].cdf(uv)-dist_list[i].cdf(lv)) for i in range(0, n)]
 mod_ppf = lambda u: p1_dist.ppf(p1_dist.cdf(lv) + u * (p1_dist.cdf(uv)-p1_dist.cdf(lv)))
-p1_pp = scipy.interpolate.splrep(h, mod_ppf(h))
-plt.plot(h1, scipy.interpolate.splev(h, p1_pp))
-print(p1_pp)
-plt.show()
-plt.plot(h, p1_dist.ppf(h))
-plt.show()
-print(p1_pp)
+mod_ppf_list = [lambda u: dist_list[i].ppf(dist_list[i].cdf(lv)+u * (dist_list[i].cdf(uv)-dist_list[i].cdf(lv))) for i in range(0, n)]
+p1_spl = scipy.interpolate.splrep(h, mod_ppf(h), s=0, k=5)
+p1_spll = scipy.interpolate.splmake(h, mod_ppf(h), order=6)
+p1_pp = scipy.interpolate.PPoly.from_spline(p1_spl)
+p1_ppp = scipy.interpolate.PPoly.from_spline(p1_spll)
+p1_dppp = p1_ppp.derivative()
+spl_list = [scipy.interpolate.splmake(h, mod_ppf_list[i](h), order=6) for i in range(0, n)]
+pp_list = [scipy.interpolate.PPoly.from_spline(spl_list[i]) for i in range(0, n)]
+
+# print(p1_spl)
+# print(p1_spll)
 # print(p1_interp(np.linspace(0,1,50)))
 # print(p1_interp(h))
 # p1_spl = scipy.interpolate.splmake(h, p1_dist.ppf(h), order=3) # create spline interpolation
@@ -123,17 +131,119 @@ print(p1_pp)
 
 # p2_interp = scipy.interpolate.interp1d(h, p2_dist.ppf(h), kind=6)
 # p3_interp = scipy.interpolate.interp1d(h, p3_dist.ppf(h), kind=6)
-# p1_interp = scipy.interpolate.PiecewisePolynomial(h, p1_dist.ppf(h), orders=ko)
+
 # p2_interp = scipy.interpolate.PiecewisePolynomial(h, p2_dist.ppf(h), orders=ko)
 # p3_interp = scipy.interpolate.PiecewisePolynomial(h, p3_dist.ppf(h), orders=ko)
+
+bigN = np.sum(k)
+sumk = 1.0/(bigN-1)
 
 t_grid = np.linspace(res, uv, ngrid)
 obj = np.zeros(ngrid)
 obj[0] = 1000
 obj[-1] = 1000
 
+f_cdf1 = lambda x: [1-pp_list[i](x, nu=0) for i in range(0, n)]
+f_pdf1 = lambda x: [-pp_list[i](x, nu=1) for i in range(0, n)]
+
+
+
+
+def concat(i, f0, g0):
+    if i == 0:
+        aa = f0[0]
+    else:
+        qq = np.zeros((i, i))
+        for d in range(0, i):
+            for ll in range(0, d):
+                for j in range(0, d-ll):
+                    qq[ll, d] = qq[ll, d] + g0[j+1] * qq[ll-1, d-j]
+        aa = np.dot(f0[1:i+1], qq[0:i, i-1])
+    return aa
+
+
 def asym_recursion(tt):
     t = np.linspace(tt, res, nt)
+    inc = t[1]-t[0]
+    cdfres = f_cdf1(res)
+
+
+
+    for i in range(0, n):
+        bids[i, :] = t
+    lpl[:, -1] = np.array(f_pdf1(uv))*bigN/(bigN-1)
+    l[:, -1] = 1
+    check = 0
+    obj1 = 0
+
+    m = nt-1
+    while(m >= 0):
+        a[:, 0] = l[:, m]
+        print(a[:, 0])
+        for i in range(n):
+            for j in range(big_J+1):
+                fc = np.math.factorial(j)
+
+                d[i, j] = (-1)**j * pp_list[i](1-a[i, 0], nu=j)/fc
+        print(d)
+        # initialize other taylor series coefficients
+        p[:, 0] = d[:, 0] - t[m]
+        bigb[:, 0] = -1
+        for i in range(0, n):
+            a1[i, i] = 1/p[i, 0]
+            a2[:, i] = k[i]/p[i, 0]
+        biga[:, :] = a1 - a2 * sumk
+        b2 = np.dot(biga, bigb)
+        b[:, 0] = b2[:, 0]
+
+        # need to store p0 for revenue calculations
+        p0[:, m] = p[:, 0]
+
+        # recursion to calculate a(:,i),i=1,...,bigJ
+        for i in range(0, big_J):
+            # calculate a(:,i)
+            for j in range(0, i-1):
+                a[:, i] = a[:, i] + a[:, j]*b[:, i-j-1]
+            a[:, i] = a[:, i]/np.float64(i+1)
+
+            # calculate p(:,i)
+
+            for j in range(0, n):
+                p[j, i] = concat(i, d[j, :], a[j, :])
+
+            if i==1:
+                p[:, i] = p[:, i] - 1
+
+            # calculate RHS of main equation
+            for j in range(0, i):
+                c1[j, :] = b[:, i-j]
+            c2 = np.dot(p[:, 0:i], c1[0:i, :])
+            for j in range(0, n):
+                bigb[j, 0] = np.sum(b1[j, :] * c2[j, :])
+            # calculate new b
+                b2 = np.dot(biga, bigb)
+                b[:, i] = b2[:, 0]
+
+
+        m -= 1
+        # calculate new values of l and inverse bids, and lpl
+        for i in range(0, big_J):
+            l[:, m] += a[:, i] * ((-inc)**i)
+            lpl[:, m] += b[:, i] * ((-inc)**i)
+            bids[:, m+1] += p[:, i] * ((-inc)**i)
+        check += np.where(l[:, m] - cdfres < 0, 1, 0)
+        check += np.where(l[:, m] > 1, 1, 0)
+        check += np.where(l[:, m] > l[:, m+1], 1, 0)
+
+        if np.sum(check)>0:
+            obj1 = 1000
+            m = -1
+        elif sum(check)==0 and m<=2:
+            obj1 += np.sqrt(np.sum(p[:, 0]**2))
+
+
+        return obj1
+
 
 
 
@@ -142,5 +252,5 @@ def asym_recursion(tt):
 for i in range(1, ngrid):
     obj[i] = asym_recursion(t_grid[i])
 
-
+print(obj)
 
