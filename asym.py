@@ -22,6 +22,7 @@ nt = 200 # of grid points
 
 
 
+
 k = np.zeros(n)
 u = np.zeros(n)
 t = np.zeros(nt)
@@ -113,7 +114,10 @@ p1_pp = scipy.interpolate.PPoly.from_spline(p1_spl)
 p1_ppp = scipy.interpolate.PPoly.from_spline(p1_spll)
 p1_dppp = p1_ppp.derivative()
 spl_list = [scipy.interpolate.splmake(h, mod_ppf_list[i](h), order=6) for i in range(0, n)]
+cdf_list = [scipy.interpolate.splmake(h, mod_cdf_list[i](h), order=6) for i in range(0, n)]
 pp_list = [scipy.interpolate.PPoly.from_spline(spl_list[i]) for i in range(0, n)]
+ppc_list = [scipy.interpolate.PPoly.from_spline(cdf_list[i]) for i in range(0, n)]
+
 
 # print(p1_spl)
 # print(p1_spll)
@@ -142,23 +146,32 @@ t_grid = np.linspace(res, uv, ngrid)
 obj = np.zeros(ngrid)
 obj[0] = 1000
 obj[-1] = 1000
-
-f_cdf1 = lambda x: [1-pp_list[i](x, nu=0) for i in range(0, n)]
-f_pdf1 = lambda x: [-pp_list[i](x, nu=1) for i in range(0, n)]
+# f_icdf = lambda x: [1-pp_list[i](x, nu=0) for i in range(0, n)]
+f_cdf1 = lambda x: [ppc_list[i](x, nu=0) for i in range(0, n)]
+f_pdf1 = lambda x: [ppc_list[i](x, nu=1) for i in range(0, n)]
 
 
 
 
 def concat(i, f0, g0):
+    # i += 1
+    # i = 1
+    print(i)
+    print(f0, g0)
     if i == 0:
         aa = f0[0]
     else:
-        qq = np.zeros((i, i))
-        for d in range(0, i):
-            for ll in range(0, d):
-                for j in range(0, d-ll):
-                    qq[ll, d] = qq[ll, d] + g0[j+1] * qq[ll-1, d-j]
-        aa = np.dot(f0[1:i+1], qq[0:i, i-1])
+        qq = np.zeros((i+1, i+1))
+        qq[0, 0] = 1
+        for d in range(1, i+1):
+            for ll in range(1, d+1):
+                for j in range(1, d+1-ll+1):
+                    print(ll,d, j+1, ll-1, d-j)
+                    qq[ll, d] = qq[ll, d] + g0[j] * qq[ll-1, d-j]
+
+
+        aa = np.dot(f0[1:i+1], qq[1:i+1, i])
+    print('exiting concat')
     return aa
 
 
@@ -166,7 +179,7 @@ def asym_recursion(tt):
     t = np.linspace(tt, res, nt)
     inc = t[1]-t[0]
     cdfres = f_cdf1(res)
-
+    # print(cdfres)
 
 
     for i in range(0, n):
@@ -179,13 +192,13 @@ def asym_recursion(tt):
     m = nt-1
     while(m >= 0):
         a[:, 0] = l[:, m]
-        print(a[:, 0])
+        # print(a[:, 0])
         for i in range(n):
             for j in range(big_J+1):
                 fc = np.math.factorial(j)
 
                 d[i, j] = (-1)**j * pp_list[i](1-a[i, 0], nu=j)/fc
-        print(d)
+        # print(d)
         # initialize other taylor series coefficients
         p[:, 0] = d[:, 0] - t[m]
         bigb[:, 0] = -1
@@ -200,11 +213,11 @@ def asym_recursion(tt):
         p0[:, m] = p[:, 0]
 
         # recursion to calculate a(:,i),i=1,...,bigJ
-        for i in range(0, big_J):
+        for i in range(1, big_J+1):
             # calculate a(:,i)
-            for j in range(0, i-1):
+            for j in range(0, i):
                 a[:, i] = a[:, i] + a[:, j]*b[:, i-j-1]
-            a[:, i] = a[:, i]/np.float64(i+1)
+            a[:, i] = a[:, i]/np.float64(1)
 
             # calculate p(:,i)
 
@@ -216,33 +229,41 @@ def asym_recursion(tt):
 
             # calculate RHS of main equation
             for j in range(0, i):
-                c1[j, :] = b[:, i-j]
-            c2 = np.dot(p[:, 0:i], c1[0:i, :])
+                # print('is neg', i-j-1)
+                c1[j, :] = b[:, i-j-1]
+
+            c2 = np.dot(p[:, 1:i+1], c1[0:i, :])
+
             for j in range(0, n):
                 bigb[j, 0] = np.sum(b1[j, :] * c2[j, :])
+
             # calculate new b
-                b2 = np.dot(biga, bigb)
-                b[:, i] = b2[:, 0]
+            b2 = np.dot(biga, bigb)
+            b[:, i] = b2[:, 0]
 
 
         m -= 1
         # calculate new values of l and inverse bids, and lpl
-        for i in range(0, big_J):
+        for i in range(0, big_J+1):
             l[:, m] += a[:, i] * ((-inc)**i)
             lpl[:, m] += b[:, i] * ((-inc)**i)
             bids[:, m+1] += p[:, i] * ((-inc)**i)
+        print(a[:, i], inc)
         check += np.where(l[:, m] - cdfres < 0, 1, 0)
         check += np.where(l[:, m] > 1, 1, 0)
         check += np.where(l[:, m] > l[:, m+1], 1, 0)
-
-        if np.sum(check)>0:
+        # print(check)
+        # print(l)
+        # print(lpl)
+        if np.sum(check) > 0:
             obj1 = 1000
             m = -1
+            print("check exit")
         elif sum(check)==0 and m<=2:
             obj1 += np.sqrt(np.sum(p[:, 0]**2))
 
 
-        return obj1
+    return obj1
 
 
 
@@ -251,6 +272,10 @@ def asym_recursion(tt):
 
 for i in range(1, ngrid):
     obj[i] = asym_recursion(t_grid[i])
+    print(obj[i])
+    if obj[i] > obj[i-1]:
+        print("exiting b")
+        break
 
 print(obj)
 
