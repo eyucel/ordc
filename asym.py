@@ -1,10 +1,13 @@
 import numpy as np
 import scipy.interpolate
 import scipy.stats
+from scipy.optimize import minimize
 import matplotlib.pyplot as plt
 
 
-
+class storage:
+    def __init__(self):
+        pass
 
 npt = 1001
 ngrid = 60
@@ -21,11 +24,11 @@ big_J = 2 # taylor series order expansion
 nt = 200 # of grid points
 
 
-
+bad_form = storage()
 
 k = np.zeros(n)
 u = np.zeros(n)
-t = np.zeros(nt)
+t = np.zeros(nt+1)
 Fres = np.zeros(n)
 a = np.zeros((n, big_J+1))
 b = np.zeros((n, big_J+1))
@@ -81,12 +84,12 @@ musd[1, :] = np.array([2, 1])
 musd[2, :] = np.array([3.39, 2.2])
 aa = musd[:, 0]
 bb = musd[:, 1]
-
+print(musd)
 dist_list = [scipy.stats.weibull_min(musd[i, 0], scale=musd[i, 1]) for i in range(0, n)]
 
-p1_dist = scipy.stats.weibull_min(musd[0, 0], scale=musd[0, 1])
-p2_dist = scipy.stats.weibull_min(musd[1, 0], scale=musd[1, 1])
-p3_dist = scipy.stats.weibull_min(musd[2, 0], scale=musd[2, 1])
+# p1_dist = scipy.stats.weibull_min(musd[0, 0], scale=musd[0, 1])
+# p2_dist = scipy.stats.weibull_min(musd[1, 0], scale=musd[1, 1])
+# p3_dist = scipy.stats.weibull_min(musd[2, 0], scale=musd[2, 1])
 
 
 qcdf[0, :] = np.array([1, 0, 0])
@@ -104,21 +107,26 @@ br = np.zeros((n, npt))
 bcf1 = np.zeros((n, npt))
 pcf1 = np.zeros((n, ko, npt))
 br1 = np.zeros((n, npt))
-mod_cdf = lambda v: (p1_dist.cdf(v)-p1_dist.cdf(lv))/(p1_dist.cdf(uv)-p1_dist.cdf(lv))
-mod_cdf_list = [lambda v: (dist_list[i].cdf(v)-dist_list[i].cdf(lv))/(dist_list[i].cdf(uv)-dist_list[i].cdf(lv)) for i in range(0, n)]
-mod_ppf = lambda u: p1_dist.ppf(p1_dist.cdf(lv) + u * (p1_dist.cdf(uv)-p1_dist.cdf(lv)))
-mod_ppf_list = [lambda u: dist_list[i].ppf(dist_list[i].cdf(lv)+u * (dist_list[i].cdf(uv)-dist_list[i].cdf(lv))) for i in range(0, n)]
-p1_spl = scipy.interpolate.splrep(h, mod_ppf(h), s=0, k=5)
-p1_spll = scipy.interpolate.splmake(h, mod_ppf(h), order=6)
-p1_pp = scipy.interpolate.PPoly.from_spline(p1_spl)
-p1_ppp = scipy.interpolate.PPoly.from_spline(p1_spll)
-p1_dppp = p1_ppp.derivative()
+# mod_cdf = lambda v: (p1_dist.cdf(v)-p1_dist.cdf(lv))/(p1_dist.cdf(uv)-p1_dist.cdf(lv))
+mod_cdf_list = [lambda v, i=i: (dist_list[i].cdf(v)-dist_list[i].cdf(lv))/(dist_list[i].cdf(uv)-dist_list[i].cdf(lv)) for i in range(0, n)]
+# mod_ppf = lambda u: p1_dist.ppf(p1_dist.cdf(lv) + u * (p1_dist.cdf(uv)-p1_dist.cdf(lv)))
+mod_ppf_list = [lambda u, i=i: dist_list[i].ppf(dist_list[i].cdf(lv) + u * (dist_list[i].cdf(uv)-dist_list[i].cdf(lv))) for i in range(0, n)]
+# p1_spl = scipy.interpolate.splrep(h, mod_ppf(h), s=0, k=5)
+# p1_spll = scipy.interpolate.splmake(h, mod_ppf(h), order=6)
+# p1_pp = scipy.interpolate.PPoly.from_spline(p1_spl)
+# p1_ppp = scipy.interpolate.PPoly.from_spline(p1_spll)
+# p1_dppp = p1_ppp.derivative()
 spl_list = [scipy.interpolate.splmake(h, mod_ppf_list[i](h), order=6) for i in range(0, n)]
-cdf_list = [scipy.interpolate.splmake(h, mod_cdf_list[i](h), order=6) for i in range(0, n)]
+cdf_list = [scipy.interpolate.splmake(h1, mod_cdf_list[i](h1), order=6) for i in range(0, n)]
 pp_list = [scipy.interpolate.PPoly.from_spline(spl_list[i]) for i in range(0, n)]
 ppc_list = [scipy.interpolate.PPoly.from_spline(cdf_list[i]) for i in range(0, n)]
 
-
+print((dist_list[0].cdf(2)-dist_list[0].cdf(lv))/(dist_list[0].cdf(uv)-dist_list[0].cdf(lv)))
+print((dist_list[1].cdf(2)-dist_list[1].cdf(lv))/(dist_list[1].cdf(uv)-dist_list[1].cdf(lv)))
+print((dist_list[2].cdf(2)-dist_list[2].cdf(lv))/(dist_list[2].cdf(uv)-dist_list[2].cdf(lv)))
+print(mod_cdf_list[0](2))
+print(mod_cdf_list[1](2))
+print(mod_cdf_list[2](2))
 # print(p1_spl)
 # print(p1_spll)
 # print(p1_interp(np.linspace(0,1,50)))
@@ -143,6 +151,7 @@ bigN = np.sum(k)
 sumk = 1.0/(bigN-1)
 
 t_grid = np.linspace(res, uv, ngrid)
+
 obj = np.zeros(ngrid)
 obj[0] = 1000
 obj[-1] = 1000
@@ -156,8 +165,8 @@ f_pdf1 = lambda x: [ppc_list[i](x, nu=1) for i in range(0, n)]
 def concat(i, f0, g0):
     # i += 1
     # i = 1
-    print(i)
-    print(f0, g0)
+    # print(i)
+    # print(f0, g0)
     if i == 0:
         aa = f0[0]
     else:
@@ -166,21 +175,21 @@ def concat(i, f0, g0):
         for d in range(1, i+1):
             for ll in range(1, d+1):
                 for j in range(1, d+1-ll+1):
-                    print(ll,d, j+1, ll-1, d-j)
+                    # print(ll,d, j+1, ll-1, d-j)
                     qq[ll, d] = qq[ll, d] + g0[j] * qq[ll-1, d-j]
 
 
         aa = np.dot(f0[1:i+1], qq[1:i+1, i])
-    print('exiting concat')
+    # print('exiting concat')
     return aa
 
 
 def asym_recursion(tt):
     t = np.linspace(tt, res, nt+1)
-    inc = t[1]-t[0]
+    inc = (tt-res)/(nt)
     cdfres = f_cdf1(res)
     # print(cdfres)
-
+    t[0] = res
     p0 = np.zeros((n, nt+1))
     l = np.zeros((n, nt+1))
     lpl = np.zeros((n, nt+1))
@@ -227,7 +236,7 @@ def asym_recursion(tt):
             for j in range(0, n):
                 p[j, i] = concat(i, d[j, :], a[j, :])
 
-            if i==1:
+            if i == 1:
                 p[:, i] = p[:, i] - 1
 
             # calculate RHS of main equation
@@ -248,6 +257,7 @@ def asym_recursion(tt):
         m -= 1
         # calculate new values of l and inverse bids, and lpl
         for i in range(0, big_J+1):
+
             l[:, m] += a[:, i] * ((-inc)**i)
             lpl[:, m] += b[:, i] * ((-inc)**i)
             bids[:, m+1] += p[:, i] * ((-inc)**i)
@@ -262,13 +272,13 @@ def asym_recursion(tt):
         # print(lpl)
         if np.sum(check) > 0:
             obj1 = 1000
-            print(m)
+            # print(m)
             m = 0
-            print("check exit")
+            # print("check exit")
         elif sum(check)==0 and m<=2:
             obj1 += np.sqrt(np.sum(p[:, 0]**2))
 
-
+    bad_form.bids = bids
     return obj1
 
 
@@ -276,12 +286,19 @@ def asym_recursion(tt):
 
 
 
-for i in range(1, ngrid-1):
+for i in range(1, ngrid):
     obj[i] = asym_recursion(t_grid[i])
     print(obj[i])
     if obj[i] > obj[i-1]:
         print("exiting b")
         break
-
+tstar = t_grid[i-1]
+ginc = (uv-res)/(ngrid-1)
+xint = ginc
+dogrid = False
 print(obj)
 
+res = minimize(asym_recursion, tstar, method='nelder-mead', options={'xtol': 1e-8, 'disp': True})
+print(bad_form.bids[:, :-1])
+plt.plot(bad_form.bids[:, :-1].T)
+plt.show()
