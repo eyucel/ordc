@@ -3,11 +3,47 @@ import scipy.interpolate
 import scipy.stats
 from scipy.optimize import minimize
 import matplotlib.pyplot as plt
-
-
+from itertools import starmap
+import BSpline
 class storage:
     def __init__(self):
         pass
+
+
+
+cvx=lambda x, y, t: (1-t) * x + t * y # affine/convex combination of two numbers x, y
+# cvxP=lambda P, Q, t: (cvx(P[0], Q[0], t), cvx(P[1], Q[1], t))# affine/cvx comb of two points P,Q
+def cvxP(P, Q, t):
+    return (cvx(P[0], Q[0], t), cvx(P[1], Q[1], t))# affine/cvx comb of two points P,Q
+def omega(u, k, t):
+    # defines the list of coefficients for the convex combinations performed in a step of de Boor algo
+
+    #if (len(u)!=2*k+1 or t<u[k] or t>u[k+1]):
+        #raise InvalidInputError('the list u  has not the length 2k+1 or t isn't within right interval')
+
+    return list(map(lambda j: (t-u[j]) / (u[j+k]-u[j]),  range(1, k+1)))
+
+
+def DeBoor(d, u, k, t):
+    #len(d) must be (k+1) and len(u)=2*k+1:
+    # this algorithm evaluates a point c(t) on an arc of B-spline curve
+    # of degree k, defined by:
+    # u_0<=u_1<=... u_k<u_{k+1}<=...u_{2k}  the sequence of knots
+    # d_0, d_1, ... d_k   de Boor points
+    print(d)
+    if(len(d)==1):
+        return d[0]
+    else:
+        return DeBoor(cvxList(d, omega(u, k,t)), u[1:-1], k-1,t)
+
+
+def cvxList(d, alpha):
+    #len(d)=len(alpha)+1
+    print(list(zip(d[:-1], d[1:], alpha))[0])
+    qq= list(starmap(cvxP, zip(d[:-1], d[1:], alpha)))
+
+    return qq
+
 
 npt = 1001
 ngrid = 60
@@ -69,7 +105,7 @@ cff1 = np.zeros(n)
 k = np.array([1, 1, 1])
 
 lv = 0
-uv = 5
+uv = 3
 res = 0
 n_cdf = 3 # three b-cdfs
 ccl = np.zeros(n_cdf)
@@ -116,17 +152,48 @@ mod_ppf_list = [lambda u, i=i: dist_list[i].ppf(dist_list[i].cdf(lv) + u * (dist
 # p1_pp = scipy.interpolate.PPoly.from_spline(p1_spl)
 # p1_ppp = scipy.interpolate.PPoly.from_spline(p1_spll)
 # p1_dppp = p1_ppp.derivative()
-spl_list = [scipy.interpolate.splmake(h, mod_ppf_list[i](h), order=6) for i in range(0, n)]
-cdf_list = [scipy.interpolate.splmake(h1, mod_cdf_list[i](h1), order=6) for i in range(0, n)]
-pp_list = [scipy.interpolate.PPoly.from_spline(spl_list[i]) for i in range(0, n)]
-ppc_list = [scipy.interpolate.PPoly.from_spline(cdf_list[i]) for i in range(0, n)]
+# spl_list = [scipy.interpolate.splmake(h, mod_ppf_list[i](h), order=6) for i in range(0, n)]
+# cdf_list = [scipy.interpolate.splmake(h1, mod_cdf_list[i](h1), order=6) for i in range(0, n)]
+# h = [0, 1, 1, 3, 4, 6, 6, 6]
+# ko = 2
+# npt = 8
+# print(h)
+# print(ko-ko/2)
+knots = np.zeros(npt+ko)
+knots[0:ko] = h[0]
+knots[ko:npt] = h[ko-ko//2: npt-ko//2]
+knots[npt:]= h[-1]+told
+# # print(len(knots))
+# basis = BSpline.Bspline(knots, 3)
+# # print(basis(.5))
+# print(basis(4))
+# print(basis(5))
+# plt.plot(h,([np.dot(mod_ppf_list[0](h), basis(i)) for i in h]))
+# plt.plot(h, mod_ppf_list[0](h))
+# plt.show()
+# basis(h)
+# basis.plot()
 
-print((dist_list[0].cdf(2)-dist_list[0].cdf(lv))/(dist_list[0].cdf(uv)-dist_list[0].cdf(lv)))
-print((dist_list[1].cdf(2)-dist_list[1].cdf(lv))/(dist_list[1].cdf(uv)-dist_list[1].cdf(lv)))
-print((dist_list[2].cdf(2)-dist_list[2].cdf(lv))/(dist_list[2].cdf(uv)-dist_list[2].cdf(lv)))
-print(mod_cdf_list[0](2))
-print(mod_cdf_list[1](2))
-print(mod_cdf_list[2](2))
+spl_list = [scipy.interpolate.splrep(h, mod_ppf_list[i](h), k=5, task=-1, t=knots[1:-1]) for i in range(0, n)]
+cdf_list = [scipy.interpolate.splrep(h1, mod_cdf_list[i](h1), k=5) for i in range(0, n)]
+pp_list = [scipy.interpolate.PPoly.from_spline(spl_list[i], extrapolate=False) for i in range(0, n)]
+ppc_list = [scipy.interpolate.PPoly.from_spline(cdf_list[i], extrapolate=False) for i in range(0, n)]
+# plt.plot(h,dist_list[0].cdf(h))
+# plt.plot(h,mod_cdf_list[0](h))
+plt.figure()
+plt.plot(h,pp_list[2](h, nu=0))
+plt.figure()
+plt.plot(h,pp_list[2](h, nu=1))
+plt.figure()
+plt.plot(h,pp_list[2](h, nu=2))
+plt.show()
+# print(h)
+# print((dist_list[0].cdf(2)-dist_list[0].cdf(lv))/(dist_list[0].cdf(uv)-dist_list[0].cdf(lv)))
+# print((dist_list[1].cdf(2)-dist_list[1].cdf(lv))/(dist_list[1].cdf(uv)-dist_list[1].cdf(lv)))
+# print((dist_list[2].cdf(2)-dist_list[2].cdf(lv))/(dist_list[2].cdf(uv)-dist_list[2].cdf(lv)))
+# print(mod_cdf_list[0](2))
+# print(mod_ppf_list[0](0))
+# print(ppc_list[0](0))
 # print(p1_spl)
 # print(p1_spll)
 # print(p1_interp(np.linspace(0,1,50)))
@@ -159,8 +226,9 @@ obj[-1] = 1000
 f_cdf1 = lambda x: [ppc_list[i](x, nu=0) for i in range(0, n)]
 f_pdf1 = lambda x: [ppc_list[i](x, nu=1) for i in range(0, n)]
 
-
-
+# print(f_pdf1(2))
+# print([dist_list[i].pdf(2) for i in range(0,n)])
+# print(np.array(f_pdf1(uv)))
 
 def concat(i, f0, g0):
     # i += 1
@@ -185,9 +253,10 @@ def concat(i, f0, g0):
 
 
 def asym_recursion(tt):
-    t = np.linspace(tt, res, nt+1)
+    t = np.linspace(res, tt, nt+1)
+    t[nt] = tt
     inc = (tt-res)/(nt)
-    cdfres = f_cdf1(res)
+    cdfres = np.array(f_cdf1(res))
     # print(cdfres)
     t[0] = res
     p0 = np.zeros((n, nt+1))
@@ -202,25 +271,31 @@ def asym_recursion(tt):
     check = np.zeros(3)
     m = nt
     while(m >= 1):
-        a = np.zeros((n, nt+1))
+        a = np.zeros((n, big_J+1))
         a[:, 0] = l[:, m]
-        # print(a[:, 0])
+        # print(a)
         for i in range(n):
             for j in range(big_J+1):
                 fc = np.math.factorial(j)
 
                 d[i, j] = (-1)**j * pp_list[i](1-a[i, 0], nu=j)/fc
-        # print(d)
+                print(i,j, pp_list[i](1-a[i, 0], nu=j ), t[m])
+
         # initialize other taylor series coefficients
         p[:, 0] = d[:, 0] - t[m]
+        # print(d[:, 0])
+        print(p[:, 0])
         bigb[:, 0] = -1
+        a1 = np.zeros((n, n))
         for i in range(0, n):
             a1[i, i] = 1/p[i, 0]
             a2[:, i] = k[i]/p[i, 0]
+            # print(p[i, 0], k[i])
         biga[:, :] = a1 - a2 * sumk
         b2 = np.dot(biga, bigb)
+        # print(biga, bigb)
         b[:, 0] = b2[:, 0]
-
+        # print('b', b)
         # need to store p0 for revenue calculations
         p0[:, m] = p[:, 0]
 
@@ -228,9 +303,12 @@ def asym_recursion(tt):
         for i in range(1, big_J+1):
             # calculate a(:,i)
             for j in range(0, i):
+                # print(a)
+                # print('qqqqqqqq')
+                # print(b)
                 a[:, i] = a[:, i] + a[:, j]*b[:, i-j-1]
-            a[:, i] = a[:, i]/np.float64(1)
-
+            a[:, i] = a[:, i]/np.float64(i)
+            # print(a)
             # calculate p(:,i)
 
             for j in range(0, n):
@@ -240,9 +318,9 @@ def asym_recursion(tt):
                 p[:, i] = p[:, i] - 1
 
             # calculate RHS of main equation
-            for j in range(0, i):
+            for j in range(1, i+1):
                 # print('is neg', i-j-1)
-                c1[j, :] = b[:, i-j-1]
+                c1[j-1, :] = b[:, i-j]
 
             c2 = np.dot(p[:, 1:i+1], c1[0:i, :])
 
@@ -261,7 +339,8 @@ def asym_recursion(tt):
             l[:, m] += a[:, i] * ((-inc)**i)
             lpl[:, m] += b[:, i] * ((-inc)**i)
             bids[:, m+1] += p[:, i] * ((-inc)**i)
-        # print(a[:, i], inc)
+
+
         check += np.where(l[:, m] - cdfres < 0, 1, 0)
         # print(l[:, m])
         # print(l[:, m+1])
