@@ -5,6 +5,7 @@ from scipy.optimize import minimize
 import matplotlib.pyplot as plt
 from itertools import starmap
 import BSpline
+import scipy as sp
 class storage:
     def __init__(self):
         pass
@@ -155,8 +156,9 @@ mod_ppf_list = [lambda u, i=i: dist_list[i].ppf(dist_list[i].cdf(lv) + u * (dist
 # spl_list = [scipy.interpolate.splmake(h, mod_ppf_list[i](h), order=6) for i in range(0, n)]
 # cdf_list = [scipy.interpolate.splmake(h1, mod_cdf_list[i](h1), order=6) for i in range(0, n)]
 # h = [0, 1, 1, 3, 4, 6, 6, 6]
-# ko = 2
-# npt = 8
+# h = list(range(0,6))
+# ko = 4
+# npt = 6
 # print(h)
 # print(ko-ko/2)
 knots = np.zeros(npt+ko)
@@ -164,28 +166,35 @@ knots[0:ko] = h[0]
 knots[ko:npt] = h[ko-ko//2: npt-ko//2]
 knots[npt:]= h[-1]+told
 # # print(len(knots))
-# basis = BSpline.Bspline(knots, 3)
+basis = BSpline.Bspline(knots, 6-1)
+# print([basis(i) for i in h])
+zzz = np.array([basis(i) for i in h])
+# print(zzz)
+#
 # # print(basis(.5))
 # print(basis(4))
 # print(basis(5))
-# plt.plot(h,([np.dot(mod_ppf_list[0](h), basis(i)) for i in h]))
+# qsz = lambda x: np.array(x)**3
+coefs = [sp.linalg.solve(zzz, mod_ppf_list[i](h)) for i in range(0,n)]
+# plt.plot(h, ([np.dot(qsz(h), basis(i)) for i in h]))
 # plt.plot(h, mod_ppf_list[0](h))
 # plt.show()
 # basis(h)
 # basis.plot()
 
-spl_list = [scipy.interpolate.splrep(h, mod_ppf_list[i](h), k=5, task=-1, t=knots[1:-1]) for i in range(0, n)]
+spl_list = [scipy.interpolate.splrep(h, mod_ppf_list[i](h), k=5) for i in range(0, n)]
 cdf_list = [scipy.interpolate.splrep(h1, mod_cdf_list[i](h1), k=5) for i in range(0, n)]
-pp_list = [scipy.interpolate.PPoly.from_spline(spl_list[i], extrapolate=False) for i in range(0, n)]
+pp_list = [scipy.interpolate.PPoly.from_spline((knots, coefs[i], 5),extrapolate=None) for i in range(0,n)]
+# pp_list = [scipy.interpolate.PPoly.from_spline(spl_list[i], extrapolate=False) for i in range(0, n)]
 ppc_list = [scipy.interpolate.PPoly.from_spline(cdf_list[i], extrapolate=False) for i in range(0, n)]
 # plt.plot(h,dist_list[0].cdf(h))
 # plt.plot(h,mod_cdf_list[0](h))
 plt.figure()
-plt.plot(h,pp_list[2](h, nu=0))
+plt.plot(h,pp_list[1](h, nu=0))
 plt.figure()
-plt.plot(h,pp_list[2](h, nu=1))
+plt.plot(h,pp_list[1](h, nu=1))
 plt.figure()
-plt.plot(h,pp_list[2](h, nu=2))
+plt.plot(h,pp_list[1](h, nu=2))
 plt.show()
 # print(h)
 # print((dist_list[0].cdf(2)-dist_list[0].cdf(lv))/(dist_list[0].cdf(uv)-dist_list[0].cdf(lv)))
