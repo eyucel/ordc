@@ -106,7 +106,7 @@ cff1 = np.zeros(n)
 k = np.array([1, 1, 1])
 
 lv = 0
-uv = 3
+uv = 5
 res = 0
 n_cdf = 3 # three b-cdfs
 ccl = np.zeros(n_cdf)
@@ -122,7 +122,7 @@ musd[2, :] = np.array([3.39, 2.2])
 aa = musd[:, 0]
 bb = musd[:, 1]
 print(musd)
-dist_list = [scipy.stats.weibull_min(musd[i, 0], scale=musd[i, 1]) for i in range(0, n)]
+dist_list = [scipy.stats.weibull_min(musd[i, 1], scale=musd[i, 0]) for i in range(0, n)]
 
 # p1_dist = scipy.stats.weibull_min(musd[0, 0], scale=musd[0, 1])
 # p2_dist = scipy.stats.weibull_min(musd[1, 0], scale=musd[1, 1])
@@ -182,20 +182,20 @@ coefs = [sp.linalg.solve(zzz, mod_ppf_list[i](h)) for i in range(0,n)]
 # basis(h)
 # basis.plot()
 
-spl_list = [scipy.interpolate.splrep(h, mod_ppf_list[i](h), k=5) for i in range(0, n)]
+spl_list = [scipy.interpolate.splrep(h, 1-mod_ppf_list[i](h), k=5) for i in range(0, n)]
 cdf_list = [scipy.interpolate.splrep(h1, mod_cdf_list[i](h1), k=5) for i in range(0, n)]
-pp_list = [scipy.interpolate.PPoly.from_spline((knots, coefs[i], 5),extrapolate=None) for i in range(0,n)]
-# pp_list = [scipy.interpolate.PPoly.from_spline(spl_list[i], extrapolate=False) for i in range(0, n)]
+# pp_list = [scipy.interpolate.PPoly.from_spline((knots, coefs[i], 5),extrapolate=None) for i in range(0,n)]
+pp_list = [scipy.interpolate.PPoly.from_spline(spl_list[i], extrapolate=False) for i in range(0, n)]
 ppc_list = [scipy.interpolate.PPoly.from_spline(cdf_list[i], extrapolate=False) for i in range(0, n)]
 # plt.plot(h,dist_list[0].cdf(h))
 # plt.plot(h,mod_cdf_list[0](h))
-plt.figure()
-plt.plot(h,pp_list[1](h, nu=0))
-plt.figure()
-plt.plot(h,pp_list[1](h, nu=1))
-plt.figure()
-plt.plot(h,pp_list[1](h, nu=2))
-plt.show()
+# plt.figure()
+# plt.plot(h,pp_list[2](h, nu=0))
+# plt.figure()
+# plt.plot(h,pp_list[2](h, nu=1))
+# plt.figure()
+# plt.plot(h,pp_list[2](h, nu=2))
+# plt.show()
 # print(h)
 # print((dist_list[0].cdf(2)-dist_list[0].cdf(lv))/(dist_list[0].cdf(uv)-dist_list[0].cdf(lv)))
 # print((dist_list[1].cdf(2)-dist_list[1].cdf(lv))/(dist_list[1].cdf(uv)-dist_list[1].cdf(lv)))
@@ -282,18 +282,18 @@ def asym_recursion(tt):
     while(m >= 1):
         a = np.zeros((n, big_J+1))
         a[:, 0] = l[:, m]
-        # print(a)
+        # print(a[:,0])
         for i in range(n):
             for j in range(big_J+1):
                 fc = np.math.factorial(j)
 
                 d[i, j] = (-1)**j * pp_list[i](1-a[i, 0], nu=j)/fc
-                print(i,j, pp_list[i](1-a[i, 0], nu=j ), t[m])
+                # print(i,j, pp_list[i](1-a[i, 0], nu=j ), t[m])
 
         # initialize other taylor series coefficients
         p[:, 0] = d[:, 0] - t[m]
         # print(d[:, 0])
-        print(p[:, 0])
+        # print(p[:, 0])
         bigb[:, 0] = -1
         a1 = np.zeros((n, n))
         for i in range(0, n):
