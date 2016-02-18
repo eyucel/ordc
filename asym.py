@@ -12,40 +12,6 @@ class storage:
 
 
 
-cvx=lambda x, y, t: (1-t) * x + t * y # affine/convex combination of two numbers x, y
-# cvxP=lambda P, Q, t: (cvx(P[0], Q[0], t), cvx(P[1], Q[1], t))# affine/cvx comb of two points P,Q
-def cvxP(P, Q, t):
-    return (cvx(P[0], Q[0], t), cvx(P[1], Q[1], t))# affine/cvx comb of two points P,Q
-def omega(u, k, t):
-    # defines the list of coefficients for the convex combinations performed in a step of de Boor algo
-
-    #if (len(u)!=2*k+1 or t<u[k] or t>u[k+1]):
-        #raise InvalidInputError('the list u  has not the length 2k+1 or t isn't within right interval')
-
-    return list(map(lambda j: (t-u[j]) / (u[j+k]-u[j]),  range(1, k+1)))
-
-
-def DeBoor(d, u, k, t):
-    #len(d) must be (k+1) and len(u)=2*k+1:
-    # this algorithm evaluates a point c(t) on an arc of B-spline curve
-    # of degree k, defined by:
-    # u_0<=u_1<=... u_k<u_{k+1}<=...u_{2k}  the sequence of knots
-    # d_0, d_1, ... d_k   de Boor points
-    print(d)
-    if(len(d)==1):
-        return d[0]
-    else:
-        return DeBoor(cvxList(d, omega(u, k,t)), u[1:-1], k-1,t)
-
-
-def cvxList(d, alpha):
-    #len(d)=len(alpha)+1
-    print(list(zip(d[:-1], d[1:], alpha))[0])
-    qq= list(starmap(cvxP, zip(d[:-1], d[1:], alpha)))
-
-    return qq
-
-
 npt = 1001
 ngrid = 60
 ko = 6
@@ -103,7 +69,9 @@ cf1 = np.zeros(n)
 pff1 = np.zeros(n)
 cff1 = np.zeros(n)
 
-k = np.array([1, 1, 1])
+# k = np.array([1, 1])
+# k = np.array([1, 1, 1])
+k = np.ones(n)
 
 lv = 0
 uv = 5
@@ -118,20 +86,24 @@ qcdf = np.zeros((n, n_cdf))
 i_cdf = np.array([1, 1, 1]) # three weibull
 musd[0, :] = np.array([1, 1])
 musd[1, :] = np.array([2, 1])
-musd[2, :] = np.array([3.39, 2.2])
+try:
+    musd[2, :] = np.array([3.39, 2.2])
+except:
+    pass
 aa = musd[:, 0]
 bb = musd[:, 1]
 print(musd)
 dist_list = [scipy.stats.weibull_min(musd[i, 1], scale=musd[i, 0]) for i in range(0, n)]
+# dist_list = [scipy.stats.uniform(loc=0, scale=1) for i in range(0,n)]
 
 # p1_dist = scipy.stats.weibull_min(musd[0, 0], scale=musd[0, 1])
 # p2_dist = scipy.stats.weibull_min(musd[1, 0], scale=musd[1, 1])
 # p3_dist = scipy.stats.weibull_min(musd[2, 0], scale=musd[2, 1])
 
 
-qcdf[0, :] = np.array([1, 0, 0])
-qcdf[1, :] = np.array([0, 1, 0])
-qcdf[2, :] = np.array([0, 0, 1])
+# qcdf[0, :] = np.array([1, 0, 0])
+# qcdf[1, :] = np.array([0, 1, 0])
+# qcdf[2, :] = np.array([0, 0, 1])
 
 # equal spaced grid for inverse cdf
 h = np.linspace(0, 1, npt)
@@ -183,7 +155,7 @@ coefs = [sp.linalg.solve(zzz, mod_ppf_list[i](h)) for i in range(0,n)]
 # basis.plot()
 
 spl_list = [scipy.interpolate.splrep(h, 1-mod_ppf_list[i](h), k=5) for i in range(0, n)]
-cdf_list = [scipy.interpolate.splrep(h1, mod_cdf_list[i](h1), k=5) for i in range(0, n)]
+cdf_list = [scipy.interpolate.splrep(h1, 1-mod_cdf_list[i](h1), k=5) for i in range(0, n)]
 # pp_list = [scipy.interpolate.PPoly.from_spline((knots, coefs[i], 5),extrapolate=None) for i in range(0,n)]
 pp_list = [scipy.interpolate.PPoly.from_spline(spl_list[i], extrapolate=False) for i in range(0, n)]
 ppc_list = [scipy.interpolate.PPoly.from_spline(cdf_list[i], extrapolate=False) for i in range(0, n)]
@@ -232,8 +204,8 @@ obj = np.zeros(ngrid)
 obj[0] = 1000
 obj[-1] = 1000
 # f_icdf = lambda x: [1-pp_list[i](x, nu=0) for i in range(0, n)]
-f_cdf1 = lambda x: [ppc_list[i](x, nu=0) for i in range(0, n)]
-f_pdf1 = lambda x: [ppc_list[i](x, nu=1) for i in range(0, n)]
+f_cdf1 = lambda x: [1-ppc_list[i](x, nu=0) for i in range(0, n)]
+f_pdf1 = lambda x: [-ppc_list[i](x, nu=1) for i in range(0, n)]
 
 # print(f_pdf1(2))
 # print([dist_list[i].pdf(2) for i in range(0,n)])
@@ -273,11 +245,11 @@ def asym_recursion(tt):
     lpl = np.zeros((n, nt+1))
     for i in range(0, n):
         bids[i, :] = t
-    lpl[:, -1] = np.array(f_pdf1(uv))*bigN/(bigN-1)
-    l[:, -1] = 1
+    lpl[:, nt] = np.array(f_pdf1(uv))*bigN/(bigN-1)
+    l[:, nt] = 1
 
     obj1 = 0
-    check = np.zeros(3)
+    check = np.zeros(n)
     m = nt
     while(m >= 1):
         a = np.zeros((n, big_J+1))
@@ -316,7 +288,7 @@ def asym_recursion(tt):
                 # print('qqqqqqqq')
                 # print(b)
                 a[:, i] = a[:, i] + a[:, j]*b[:, i-j-1]
-            a[:, i] = a[:, i]/np.float64(i)
+            a[:, i] = a[:, i]/i
             # print(a)
             # calculate p(:,i)
 
@@ -349,7 +321,7 @@ def asym_recursion(tt):
             lpl[:, m] += b[:, i] * ((-inc)**i)
             bids[:, m+1] += p[:, i] * ((-inc)**i)
 
-
+        # print(l[:,m],m,cdfres)
         check += np.where(l[:, m] - cdfres < 0, 1, 0)
         # print(l[:, m])
         # print(l[:, m+1])
@@ -367,8 +339,43 @@ def asym_recursion(tt):
             obj1 += np.sqrt(np.sum(p[:, 0]**2))
 
     bad_form.bids = bids
+    bad_form.lpl = lpl
     return obj1
 
+
+def best_response():
+    vgrid = np.zeros((nt+1))
+    mat1 = np.zeros((nt+1))
+    mat0 = np.zeros((nt+1))
+    kstar = np.zeros(n)
+    slpl = np.zeros((nt+1))
+    brr = np.zeros((2*n, nt+1))
+    lpl = bad_form.lpl
+    vgrid[0] = fires
+    vgrid[-1] = uv
+    vgrid = np.linspace(fires, uv, nt+1)
+
+    h = 0
+    for i in range(0, n):
+        kstar = np.ones(n)
+        kstar[i]-=1
+        print(kstar)
+        slpl = np.zeros((nt+1))
+        for j in range(0,n):
+            slpl += kstar[j]*lpl[j,:]
+            print(i,j,kstar[j],lpl[j,:])
+        # print(kstar[i], t)
+        for ns in range(1, nt):
+            xx = vgrid[ns]
+            mat0 = (1-(xx-t)*slpl)
+
+            mat1 = mat0**2
+            ml = np.argmin(mat1)
+
+            brr[h, ns] = xx
+            brr[h+1, ns] = t[ml]
+        h+=2
+    bad_form.brr = brr
 
 
 
@@ -376,17 +383,31 @@ def asym_recursion(tt):
 
 for i in range(1, ngrid):
     obj[i] = asym_recursion(t_grid[i])
+    # print(t_grid[i])
     print(obj[i])
     if obj[i] > obj[i-1]:
+        tstar = t_grid[i-1]
         print("exiting b")
         break
-tstar = t_grid[i-1]
+print("t*", tstar)
 ginc = (uv-res)/(ngrid-1)
 xint = ginc
 dogrid = False
 print(obj)
+fires = res
+# print(bad_form.bids.shape)
 
-res = minimize(asym_recursion, tstar, method='nelder-mead', options={'xtol': 1e-8, 'disp': True})
-print(bad_form.bids[:, :-1])
-plt.plot(bad_form.bids[:, :-1].T)
+
+result = minimize(asym_recursion, tstar, method='nelder-mead', options={'xtol': 1e-8, 'disp': True})
+t = np.linspace(res, tstar, nt+1)
+ta = np.array([t for i in range(0,3)])
+best_response()
+
+print(bad_form.bids[:, :])
+plt.plot(bad_form.bids[:, :].T,ta.T)
+
+plt.figure()
+# plt.plot(ta.T, bad_form.bids[:, :].T)
+plt.figure()
+plt.plot(np.linspace(fires,uv,nt-1), bad_form.brr[1::2, 1:nt].T)
 plt.show()
