@@ -23,8 +23,8 @@ ftol = 1e-6
 
 aucpro = 1
 n = 3 # number of h-types
-big_J = 2 # taylor series order expansion
-nt = 200 # of grid points
+big_J = 2# taylor series order expansion
+nt = 500 # of grid points
 
 
 bad_form = storage()
@@ -198,6 +198,7 @@ ppc_list = [scipy.interpolate.PPoly.from_spline(cdf_list[i], extrapolate=False) 
 bigN = np.sum(k)
 sumk = 1.0/(bigN-1)
 
+
 t_grid = np.linspace(res, uv, ngrid)
 
 obj = np.zeros(ngrid)
@@ -236,7 +237,7 @@ def concat(i, f0, g0):
 def asym_recursion(tt):
     t = np.linspace(res, tt, nt+1)
     t[nt] = tt
-    inc = (tt-res)/(nt)
+    inc = (tt-res)/nt
     cdfres = np.array(f_cdf1(res))
     # print(cdfres)
     t[0] = res
@@ -309,7 +310,7 @@ def asym_recursion(tt):
                 bigb[j, 0] = np.sum(b1[j, :] * c2[j, :])
 
             # calculate new b
-            b2 = np.dot(biga, bigb)
+            b2[:, :] = np.dot(biga, bigb)
             b[:, i] = b2[:, 0]
 
 
@@ -320,7 +321,7 @@ def asym_recursion(tt):
             l[:, m] += a[:, i] * ((-inc)**i)
             lpl[:, m] += b[:, i] * ((-inc)**i)
             bids[:, m+1] += p[:, i] * ((-inc)**i)
-            print(bids[0,m+1],(-inc)**i,i,p[0,i])
+            # print(bids[0,m+1],(-inc)**i,i,p[0,i])
 
         # print(l[:,m],m,cdfres)
         check += np.where(l[:, m] - cdfres < 0, 1, 0)
@@ -332,6 +333,10 @@ def asym_recursion(tt):
         # print(l)
         # print(lpl)
         if np.sum(check) > 0:
+            # print(m)
+            # print(sum(np.where(l[:, m] - cdfres < 0, 1, 0)))
+            # print(sum( np.where(l[:, m] > 1, 1, 0)))
+            # print(sum(np.where(l[:, m] > l[:, m+1], 1, 0)))
             obj1 = 1000
             # print(m)
             m = 0
@@ -352,9 +357,9 @@ def best_response():
     slpl = np.zeros((nt+1))
     brr = np.zeros((2*n, nt+1))
     lpl = bad_form.lpl
+    vgrid = np.linspace(fires, uv, nt+1)
     vgrid[0] = fires
     vgrid[-1] = uv
-    vgrid = np.linspace(fires, uv, nt+1)
 
     h = 0
     for i in range(0, n):
@@ -403,13 +408,15 @@ result = minimize(asym_recursion, tstar, method='nelder-mead', options={'ftol': 
 print(result.x)
 tstar = result.x[0]
 t = np.linspace(res, tstar, nt+1)
+
 ta = np.array([t for i in range(0,3)])
 best_response()
 
 print(bad_form.bids[:, :])
-plt.plot(bad_form.bids[:, :].T,ta.T)
+# plt.plot(bad_form.bids[:, :].T,ta.T)
+plt.plot(bad_form.bids[0, :],t)
 
-plt.figure()
+# plt.figure()
 # plt.plot(ta.T, bad_form.bids[:, :].T)
 plt.figure()
 plt.plot(np.linspace(fires,uv,nt-1), bad_form.brr[1::2, 1:nt].T)
