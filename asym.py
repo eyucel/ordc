@@ -133,21 +133,21 @@ mod_ppf_list = [lambda u, i=i: dist_list[i].ppf(dist_list[i].cdf(lv) + u * (dist
 # npt = 6
 # print(h)
 # print(ko-ko/2)
-knots = np.zeros(npt+ko)
-knots[0:ko] = h[0]
-knots[ko:npt] = h[ko-ko//2: npt-ko//2]
-knots[npt:]= h[-1]+told
+# knots = np.zeros(npt+ko)
+# knots[0:ko] = h[0]
+# knots[ko:npt] = h[ko-ko//2: npt-ko//2]
+# knots[npt:]= h[-1]+told
 # # print(len(knots))
-basis = BSpline.Bspline(knots, 6-1)
+# basis = BSpline.Bspline(knots, 6-1)
 # print([basis(i) for i in h])
-zzz = np.array([basis(i) for i in h])
+# zzz = np.array([basis(i) for i in h])
 # print(zzz)
 #
 # # print(basis(.5))
 # print(basis(4))
 # print(basis(5))
 # qsz = lambda x: np.array(x)**3
-coefs = [sp.linalg.solve(zzz, mod_ppf_list[i](h)) for i in range(0,n)]
+# coefs = [sp.linalg.solve(zzz, mod_ppf_list[i](h)) for i in range(0,n)]
 # plt.plot(h, ([np.dot(qsz(h), basis(i)) for i in h]))
 # plt.plot(h, mod_ppf_list[0](h))
 # plt.show()
@@ -320,6 +320,7 @@ def asym_recursion(tt):
             l[:, m] += a[:, i] * ((-inc)**i)
             lpl[:, m] += b[:, i] * ((-inc)**i)
             bids[:, m+1] += p[:, i] * ((-inc)**i)
+            print(bids[0,m+1],(-inc)**i,i,p[0,i])
 
         # print(l[:,m],m,cdfres)
         check += np.where(l[:, m] - cdfres < 0, 1, 0)
@@ -359,11 +360,11 @@ def best_response():
     for i in range(0, n):
         kstar = np.ones(n)
         kstar[i]-=1
-        print(kstar)
+        # print(kstar)
         slpl = np.zeros((nt+1))
         for j in range(0,n):
             slpl += kstar[j]*lpl[j,:]
-            print(i,j,kstar[j],lpl[j,:])
+            # print(i,j,kstar[j],lpl[j,:])
         # print(kstar[i], t)
         for ns in range(1, nt):
             xx = vgrid[ns]
@@ -398,7 +399,9 @@ fires = res
 # print(bad_form.bids.shape)
 
 
-result = minimize(asym_recursion, tstar, method='nelder-mead', options={'xtol': 1e-8, 'disp': True})
+result = minimize(asym_recursion, tstar, method='nelder-mead', options={'ftol': 1e-8, 'disp': True})
+print(result.x)
+tstar = result.x[0]
 t = np.linspace(res, tstar, nt+1)
 ta = np.array([t for i in range(0,3)])
 best_response()
