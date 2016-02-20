@@ -24,7 +24,7 @@ ftol = 1e-6
 aucpro = 1
 n = 3 # number of h-types
 big_J = 2# taylor series order expansion
-nt = 500 # of grid points
+nt = 200 # of grid points
 
 
 bad_form = storage()
@@ -230,6 +230,8 @@ def concat(i, f0, g0):
 
 
         aa = np.dot(f0[1:i+1], qq[1:i+1, i])
+        if aa > 10000:
+            print(f0[1:i+1], qq[1:i+1, i])
     # print('exiting concat')
     return aa
 
@@ -295,6 +297,9 @@ def asym_recursion(tt):
 
             for j in range(0, n):
                 p[j, i] = concat(i, d[j, :], a[j, :])
+                print(m,i,j,tt)
+                # if m==1:
+                    # print(i,j,m,p[j,i],d[j,:],a[j,:])
 
             if i == 1:
                 p[:, i] = p[:, i] - 1
@@ -321,7 +326,7 @@ def asym_recursion(tt):
             l[:, m] += a[:, i] * ((-inc)**i)
             lpl[:, m] += b[:, i] * ((-inc)**i)
             bids[:, m+1] += p[:, i] * ((-inc)**i)
-            # print(bids[0,m+1],(-inc)**i,i,p[0,i])
+            # print(m,bids[0,m+1],(-inc)**i,i,p[0,i])
 
         # print(l[:,m],m,cdfres)
         check += np.where(l[:, m] - cdfres < 0, 1, 0)
@@ -414,7 +419,7 @@ best_response()
 
 print(bad_form.bids[:, :])
 # plt.plot(bad_form.bids[:, :].T,ta.T)
-plt.plot(bad_form.bids[0, :],t)
+plt.plot(bad_form.bids[:, :],ta.T)
 
 # plt.figure()
 # plt.plot(ta.T, bad_form.bids[:, :].T)
