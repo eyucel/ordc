@@ -22,7 +22,7 @@ ftol = 1e-6
 
 
 aucpro = 1
-n = 3 # number of h-types
+n = 2 # number of h-types
 big_J = 2# taylor series order expansion
 nt = 200 # of grid points
 
@@ -74,9 +74,9 @@ cff1 = np.zeros(n)
 k = np.ones(n)
 
 lv = 0
-uv = 5
-res = 0
-n_cdf = 3 # three b-cdfs
+uv = 1
+res = 1
+n_cdf = 2 # three b-cdfs
 ccl = np.zeros(n_cdf)
 ccu = np.zeros(n_cdf)
 i_cdf = np.zeros(n_cdf)
@@ -94,7 +94,7 @@ aa = musd[:, 0]
 bb = musd[:, 1]
 print(musd)
 dist_list = [scipy.stats.weibull_min(musd[i, 1], scale=musd[i, 0]) for i in range(0, n)]
-# dist_list = [scipy.stats.uniform(loc=0, scale=1) for i in range(0,n)]
+dist_list = [scipy.stats.uniform(loc=0, scale=1) for i in range(0,n)]
 
 # p1_dist = scipy.stats.weibull_min(musd[0, 0], scale=musd[0, 1])
 # p2_dist = scipy.stats.weibull_min(musd[1, 0], scale=musd[1, 1])
@@ -199,7 +199,7 @@ bigN = np.sum(k)
 sumk = 1.0/(bigN-1)
 
 
-t_grid = np.linspace(res, uv, ngrid)
+t_grid = np.linspace(lv, res, ngrid)
 
 obj = np.zeros(ngrid)
 obj[0] = 1000
@@ -237,25 +237,25 @@ def concat(i, f0, g0):
     return aa
 
 
-def asym_recursion(tt):
-    t = np.linspace(res, tt, nt+1)
-    t[nt] = tt
-    inc = (tt-res)/nt
-    cdfres = np.array(f_cdf1(res))
+def asym_precursion(tt):
+    t = np.linspace(tt, res, nt+1)
+    t[nt] = res
+    inc = (res-tt)/nt
+    cdfres = 1-np.array(f_cdf1(res))
     # print(cdfres)
-    t[0] = res
+    t[0] = tt
     p0 = np.zeros((n, nt+1))
     l = np.zeros((n, nt+1))
     lpl = np.zeros((n, nt+1))
     for i in range(0, n):
         bids[i, :] = t
-    lpl[:, nt] = np.array(f_pdf1(uv))*bigN/(bigN-1)
-    l[:, nt] = 1
+    lpl[:, 0] = -np.array(f_pdf1(uv))*bigN/(bigN-1)
+    l[:, 0] = 1
 
     obj1 = 0
     check = np.zeros(n)
-    m = nt
-    while(m >= 1):
+    m = 0
+    while(m <= nt-1):
         a = np.zeros((n, big_J+1))
         a[:, 0] = l[:, m]
         # print(a[:,0])
@@ -263,14 +263,15 @@ def asym_recursion(tt):
             for j in range(big_J+1):
                 fc = np.math.factorial(j)
 
-                d[i, j] = (-1)**j * pp_list[i](1-a[i, 0], nu=j)/fc
+                # d[i, j] = (1)**j * pp_list[i](1-a[i, 0], nu=j)/fc
+                d[i, j] = pp_list[i](a[i, 0], nu=j)/fc
                 # print(i,j, pp_list[i](1-a[i, 0], nu=j ), t[m])
 
         # initialize other taylor series coefficients
         p[:, 0] = d[:, 0] - t[m]
         # print(d[:, 0])
         # print(p[:, 0])
-        bigb[:, 0] = -1
+        bigb[:, 0] = 1
         a1 = np.zeros((n, n))
         for i in range(0, n):
             a1[i, i] = 1/p[i, 0]
@@ -298,7 +299,7 @@ def asym_recursion(tt):
 
             for j in range(0, n):
                 p[j, i] = concat(i, d[j, :], a[j, :])
-                print(m,i,j,tt)
+                # print(m,i,j,tt)
                 # if m==1:
                     # print(i,j,m,p[j,i],d[j,:],a[j,:])
 
@@ -320,13 +321,14 @@ def asym_recursion(tt):
             b[:, i] = b2[:, 0]
 
 
-        m -= 1
+        m += 1
         # calculate new values of l and inverse bids, and lpl
         for i in range(0, big_J+1):
 
             l[:, m] += a[:, i] * ((-inc)**i)
             lpl[:, m] += b[:, i] * ((-inc)**i)
-            bids[:, m+1] += p[:, i] * ((-inc)**i)
+            bids[:, m-1] += p[:, i] * ((-inc)**i)
+
             # print(m,bids[0,m+1],(-inc)**i,i,p[0,i])
 
         # print(l[:,m],m,cdfres)
@@ -334,7 +336,7 @@ def asym_recursion(tt):
         # print(l[:, m])
         # print(l[:, m+1])
         check += np.where(l[:, m] > 1, 1, 0)
-        check += np.where(l[:, m] > l[:, m+1], 1, 0)
+        check += np.where(l[:, m] > l[:, m-1], 1, 0)
         # print(check)
         # print(l)
         # print(lpl)
@@ -345,9 +347,9 @@ def asym_recursion(tt):
             # print(sum(np.where(l[:, m] > l[:, m+1], 1, 0)))
             obj1 = 1000
             # print(m)
-            m = 0
+            m = nt
             # print("check exit")
-        elif sum(check)==0 and m<=2:
+        elif sum(check) == 0 and m > nt-2:
             obj1 += np.sqrt(np.sum(p[:, 0]**2))
 
     bad_form.bids = bids
@@ -363,9 +365,9 @@ def best_response():
     slpl = np.zeros((nt+1))
     brr = np.zeros((2*n, nt+1))
     lpl = bad_form.lpl
-    vgrid = np.linspace(fires, uv, nt+1)
-    vgrid[0] = fires
-    vgrid[-1] = uv
+    vgrid = np.linspace(lv, fires, nt+1)
+    vgrid[0] = lv
+    vgrid[-1] = fires
 
     h = 0
     for i in range(0, n):
@@ -374,12 +376,12 @@ def best_response():
         # print(kstar)
         slpl = np.zeros((nt+1))
         for j in range(0,n):
-            slpl += kstar[j]*lpl[j,:]
+            slpl += kstar[j]*bad_form.lpl[j,:]
             # print(i,j,kstar[j],lpl[j,:])
         # print(kstar[i], t)
         for ns in range(1, nt):
             xx = vgrid[ns]
-            mat0 = (1-(xx-t)*slpl)
+            mat0 = (1-(t-xx)*slpl)
 
             mat1 = mat0**2
             ml = np.argmin(mat1)
@@ -393,14 +395,16 @@ def best_response():
 
 
 
-for i in range(1, ngrid):
-    obj[i] = asym_recursion(t_grid[i])
+for i in range(ngrid-2, 0,-1):
+    obj[i] = asym_precursion(t_grid[i])
     # print(t_grid[i])
     print(obj[i])
-    if obj[i] > obj[i-1]:
-        tstar = t_grid[i-1]
+    if obj[i] > obj[i+1]:
+        tstar = t_grid[i+1]
         print("exiting b")
         break
+print(i)
+tstar = t_grid[i+1]
 print("t*", tstar)
 ginc = (uv-res)/(ngrid-1)
 xint = ginc
@@ -410,7 +414,7 @@ fires = res
 # print(bad_form.bids.shape)
 
 
-result = minimize(asym_recursion, tstar, method='nelder-mead', options={'ftol': 1e-8, 'disp': True})
+result = minimize(asym_precursion, tstar, method='nelder-mead', options={'ftol': 1e-8, 'disp': True})
 print(result.x)
 tstar = result.x[0]
 t = np.linspace(res, tstar, nt+1)
@@ -420,10 +424,11 @@ best_response()
 
 print(bad_form.bids[:, :])
 # plt.plot(bad_form.bids[:, :].T,ta.T)
-plt.plot(bad_form.bids[:, :].T,ta.T)
+# plt.plot(bad_form.bids[:, :].T,ta.T)
+plt.plot(ta.T,bad_form.bids[:, :].T)
 
 # plt.figure()
 # plt.plot(ta.T, bad_form.bids[:, :].T)
 plt.figure()
-plt.plot(np.linspace(fires,uv,nt-1), bad_form.brr[1::2, 1:nt].T)
+plt.plot(np.linspace(lv,fires,nt-1), bad_form.brr[1::2, 1:nt].T)
 plt.show()
