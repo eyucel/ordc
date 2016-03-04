@@ -263,7 +263,7 @@ def asym_recursion(tt):
             for j in range(big_J+1):
                 fc = np.math.factorial(j)
 
-                d[i, j] = (-1)**j * pp_list[i](1-a[i, 0], nu=j)/fc
+                d[i, j] = ((-1.0)**j) * pp_list[i](1-a[i, 0], nu=j)/fc
                 # print(i,j, pp_list[i](1-a[i, 0], nu=j ), t[m])
 
         # initialize other taylor series coefficients

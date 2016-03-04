@@ -75,7 +75,7 @@ k = np.ones(n)
 
 lv = 0
 uv = 1
-res = 1
+res = .8
 n_cdf = 2 # three b-cdfs
 ccl = np.zeros(n_cdf)
 ccu = np.zeros(n_cdf)
@@ -264,7 +264,7 @@ def asym_precursion(tt):
                 fc = np.math.factorial(j)
 
                 # d[i, j] = (1)**j * pp_list[i](1-a[i, 0], nu=j)/fc
-                d[i, j] = pp_list[i](a[i, 0], nu=j)/fc
+                d[i, j] = ((1.0)**j)*pp_list[i](a[i, 0], nu=j)/fc
                 # print(i,j, pp_list[i](1-a[i, 0], nu=j ), t[m])
 
         # initialize other taylor series coefficients
@@ -417,18 +417,18 @@ fires = res
 result = minimize(asym_precursion, tstar, method='nelder-mead', options={'ftol': 1e-8, 'disp': True})
 print(result.x)
 tstar = result.x[0]
-t = np.linspace(res, tstar, nt+1)
+t = np.linspace(tstar, res, nt+1)
 
 ta = np.array([t for i in range(0,3)])
 best_response()
 
 print(bad_form.bids[:, :])
 # plt.plot(bad_form.bids[:, :].T,ta.T)
-# plt.plot(bad_form.bids[:, :].T,ta.T)
-plt.plot(ta.T,bad_form.bids[:, :].T)
+plt.plot(bad_form.bids[:, :].T,ta.T)
+# plt.plot(ta.T, bad_form.bids[:, :].T)
 
 # plt.figure()
 # plt.plot(ta.T, bad_form.bids[:, :].T)
 plt.figure()
-plt.plot(np.linspace(lv,fires,nt-1), bad_form.brr[1::2, 1:nt].T)
+plt.plot(np.linspace(lv, fires, nt-1), bad_form.brr[1::2, 1:nt].T)
 plt.show()
