@@ -39,6 +39,9 @@ c = np.zeros((n, big_J+1))
 d = np.zeros((n, big_J+1))
 p = np.zeros((n, big_J+1))
 q = np.zeros((n, big_J+1))
+y = np.zeros((n, big_J+1))
+y_plus = np.zeros((n, big_J+1))
+y_plusplus = np.zeros((n, big_J+1))
 l = np.zeros((n, nt+1))
 ll = np.zeros((n, nt+1))
 lpl = np.zeros((n, nt+1))
@@ -284,7 +287,11 @@ def asym_precursion(tt):
         # print('b', b)
         # need to store p0 for revenue calculations
         p0[:, m] = p[:, 0]
-
+        q[:, 0] = p[:, 0] + t[m]-1
+        y[:, 0] = q[:, 0] / p[:, 0]
+        y_plus[:, 0] = y[:, 0]
+        y_plus[:, 0] += 1
+        y_plusplus[:, 0] = (t[m]-1) * y_plus[:, 0]
         # recursion to calculate a(:,i),i=1,...,bigJ
         for i in range(1, big_J+1):
             # calculate a(:,i)
@@ -305,14 +312,42 @@ def asym_precursion(tt):
 
             if i == 1:
                 p[:, i] = p[:, i] - 1
+                q[:, 1] = p[:, 1] + 1
+
+
+
+
+
+
+
+            s = 0
+            for j in range(i, 0, -1):
+
+                s += p[:, j] * y[:, i-j]
+            y[:, i] = (q[:, i] - s)/p[:, 0]
+            # print('begin')
+            # for i in range(1, big_J+1):
+            #     s = 0
+            #     for j in range(i, 0, -1):
+            #         # print(i, j, ':', i-j, j)
+            #         s += p[:, j] * y[:, i-j]
+            #     y[:, i] = (q[:, i] - s)/p[:, 0]
+            # print('y', y[0, :])
+            # print(p[0, :])
+            # print(q[0, :])
+            y_plus[:, i] = y[:, i]
+
+            # for j in range(1, big_J+1):
+            #     print(j, j-1)
+            y_plusplus[:, i] = (t[m]-1)*y_plus[:, i] + y_plus[:, i-1]
 
             # calculate RHS of main equation
             for j in range(1, i+1):
                 # print('is neg', i-j-1)
                 c1[j-1, :] = b[:, i-j]
 
-            c2 = np.dot(p[:, 1:i+1], c1[0:i, :])
-
+            c2 = np.dot(y_plusplus[:, 1:i+1], c1[0:i, :])
+            # print(y_plusplus[0,:],p[0,:])
             for j in range(0, n):
                 bigb[j, 0] = np.sum(b1[j, :] * c2[j, :])
 
@@ -320,8 +355,9 @@ def asym_precursion(tt):
             b2[:, :] = np.dot(biga, bigb)
             b[:, i] = b2[:, 0]
 
-
         m += 1
+        # print(b[0,:])
+
         # calculate new values of l and inverse bids, and lpl
         for i in range(0, big_J+1):
 

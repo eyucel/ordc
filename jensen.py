@@ -14,7 +14,7 @@ class storage:
 
 left = 0.05
 right = 1
-step_count = 200
+step_count = 100
 rs = np.linspace(left, right, step_count)
 all_bids = []
 all_tstars = []
@@ -443,11 +443,12 @@ bz = np.zeros((step_count,nt+1))
 for i in range(step_count):
 
     y_vals = np.interp(x, all_bids[i][0,:],all_tstars[i])
-    bz[i,:] = np.where(x>all_bids[i][0,-1],x,y_vals)
+    bz[i,:] = np.where(x > all_bids[i][0,-1],x,y_vals)
+    plt.plot(x, bz[i, :])
 
-final = np.mean(bz,axis=0)
+# final = np.mean(bz,axis=0)
 # print(x)
 # print(final)
-plt.plot(x, final)
-plt.savefig('huehuehue.png')
-np.savetxt('final.csv', [x, final], fmt='%.5f',  delimiter=',')
+# plt.plot(x, final)
+plt.savefig('huehuehue_all.png')
+# np.savetxt('final_all.csv', [x, final], fmt='%.5f',  delimiter=',')

@@ -75,7 +75,7 @@ k = np.ones(n)
 
 lv = 0
 uv = 1
-res = .8
+res = 1
 n_cdf = 2 # three b-cdfs
 ccl = np.zeros(n_cdf)
 ccu = np.zeros(n_cdf)
@@ -322,6 +322,7 @@ def asym_precursion(tt):
 
 
         m += 1
+        print(b[0,:])
         # calculate new values of l and inverse bids, and lpl
         for i in range(0, big_J+1):
 
