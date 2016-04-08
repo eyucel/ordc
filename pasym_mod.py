@@ -272,13 +272,23 @@ def asym_precursion(tt):
 
         # initialize other taylor series coefficients
         p[:, 0] = d[:, 0] - t[m]
+        q[:, 0] = p[:, 0] + t[m] - 1
+        y[:, 0] = q[:, 0] / p[:, 0]
+        y_plus[:, 0] = y[:, 0] + 1
+
+        y_plusplus[:, 0] = (t[m]-1) * (y_plus[:, 0]+1)
+        # y_plusplus[:, :] *= 2
+
         # print(d[:, 0])
         # print(p[:, 0])
         bigb[:, 0] = 1
         a1 = np.zeros((n, n))
         for i in range(0, n):
-            a1[i, i] = 1/p[i, 0]
-            a2[:, i] = k[i]/p[i, 0]
+            # a1[i, i] = 1/p[i, 0]
+            # a2[:, i] = k[i]/p[i, 0]
+            a1[i, i] = 1/y_plusplus[i, 0]
+            a2[:, i] = k[i]/y_plusplus[i, 0]
+
             # print(p[i, 0], k[i])
         biga[:, :] = a1 - a2 * sumk
         b2 = np.dot(biga, bigb)
@@ -287,11 +297,7 @@ def asym_precursion(tt):
         # print('b', b)
         # need to store p0 for revenue calculations
         p0[:, m] = p[:, 0]
-        q[:, 0] = p[:, 0] + t[m]-1
-        y[:, 0] = q[:, 0] / p[:, 0]
-        y_plus[:, 0] = y[:, 0]
-        y_plus[:, 0] += 1
-        y_plusplus[:, 0] = (t[m]-1) * y_plus[:, 0]
+
         # recursion to calculate a(:,i),i=1,...,bigJ
         for i in range(1, big_J+1):
             # calculate a(:,i)
@@ -312,7 +318,7 @@ def asym_precursion(tt):
 
             if i == 1:
                 p[:, i] = p[:, i] - 1
-                q[:, 1] = p[:, 1] + 1
+                q[:, i] = p[:, i] + 1
 
 
 
@@ -339,8 +345,8 @@ def asym_precursion(tt):
 
             # for j in range(1, big_J+1):
             #     print(j, j-1)
-            y_plusplus[:, i] = (t[m]-1)*y_plus[:, i] + y_plus[:, i-1]
-
+            y_plusplus[:, i] = (t[m]-1)*y[:, i] + y_plus[:, i-1]
+            # y_plusplus[:, :] *= 2
             # calculate RHS of main equation
             for j in range(1, i+1):
                 # print('is neg', i-j-1)
@@ -412,7 +418,7 @@ def best_response():
         # print(kstar)
         slpl = np.zeros((nt+1))
         for j in range(0,n):
-            slpl += kstar[j]*bad_form.lpl[j,:]
+            slpl += kstar[j]*bad_form.lpl[j, :]
             # print(i,j,kstar[j],lpl[j,:])
         # print(kstar[i], t)
         for ns in range(1, nt):

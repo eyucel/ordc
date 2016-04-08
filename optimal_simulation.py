@@ -22,7 +22,7 @@ def bidf(c, n, a):
 
     w = ((1-n)*a*a + 2 * a * c * n - 2 * a * c + 2 * c)/(2 + 2 * a * (-1 + n))
 
-    y = np.where(w<0, 0, w)
+    y = np.where(w < 0, 0, w)
     return y
 def f(c, y):
     w = y[0]
