@@ -197,6 +197,9 @@ ppc_list = [scipy.interpolate.PPoly.from_spline(cdf_list[i], extrapolate=False) 
 
 bigN = np.sum(k)
 sumk = 1.0/(bigN-1)
+for i in range(0,n):
+    b1[:,i] = k[i]
+    b1[i,i] = b1[i,i]-1
 
 
 t_grid = np.linspace(lv, res, ngrid)

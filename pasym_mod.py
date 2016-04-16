@@ -22,7 +22,7 @@ ftol = 1e-6
 
 
 aucpro = 1
-n = 2 # number of h-types
+n = 1 # number of h-types
 big_J = 2# taylor series order expansion
 nt = 200 # of grid points
 
@@ -75,21 +75,24 @@ cff1 = np.zeros(n)
 # k = np.array([1, 1])
 # k = np.array([1, 1, 1])
 k = np.ones(n)
+k = [2]
 
 lv = 0
 uv = 1
 res = 1
-n_cdf = 2 # three b-cdfs
+n_cdf = 1 # three b-cdfs
 ccl = np.zeros(n_cdf)
 ccu = np.zeros(n_cdf)
 i_cdf = np.zeros(n_cdf)
-musd = np.zeros((n_cdf, 2))
+
 qcdf = np.zeros((n, n_cdf))
 
 i_cdf = np.array([1, 1, 1]) # three weibull
-musd[0, :] = np.array([1, 1])
-musd[1, :] = np.array([2, 1])
+
 try:
+    musd = np.zeros((n_cdf, 2))
+    musd[0, :] = np.array([1, 1])
+    musd[1, :] = np.array([2, 1])
     musd[2, :] = np.array([3.39, 2.2])
 except:
     pass
@@ -200,6 +203,9 @@ ppc_list = [scipy.interpolate.PPoly.from_spline(cdf_list[i], extrapolate=False) 
 
 bigN = np.sum(k)
 sumk = 1.0/(bigN-1)
+for i in range(0, n):
+    b1[:,i] = k[i]
+    b1[i,i] = b1[i,i]-1
 
 
 t_grid = np.linspace(lv, res, ngrid)
@@ -277,7 +283,7 @@ def asym_precursion(tt):
         y_plus[:, 0] = y[:, 0] + 1
 
         y_plusplus[:, 0] = (t[m]-1) * (y_plus[:, 0]+1)
-        # y_plusplus[:, :] *= 2
+        y_plusplus[:, 0] /= 2
 
         # print(d[:, 0])
         # print(p[:, 0])
@@ -346,7 +352,7 @@ def asym_precursion(tt):
             # for j in range(1, big_J+1):
             #     print(j, j-1)
             y_plusplus[:, i] = (t[m]-1)*y[:, i] + y_plus[:, i-1]
-            # y_plusplus[:, :] *= 2
+            y_plusplus[:, i] /= 2
             # calculate RHS of main equation
             for j in range(1, i+1):
                 # print('is neg', i-j-1)
