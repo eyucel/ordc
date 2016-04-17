@@ -22,7 +22,7 @@ ftol = 1e-6
 
 
 aucpro = 1
-n = 1 # number of h-types
+n = 2 # number of h-types
 big_J = 2# taylor series order expansion
 nt = 200 # of grid points
 
@@ -75,12 +75,12 @@ cff1 = np.zeros(n)
 # k = np.array([1, 1])
 # k = np.array([1, 1, 1])
 k = np.ones(n)
-k = [2]
+# k = [2]
 
 lv = 0
 uv = 1
 res = 1
-n_cdf = 1 # three b-cdfs
+n_cdf = 2 # three b-cdfs
 ccl = np.zeros(n_cdf)
 ccu = np.zeros(n_cdf)
 i_cdf = np.zeros(n_cdf)
@@ -248,6 +248,9 @@ def concat(i, f0, g0):
 
 def asym_precursion(tt):
     t = np.linspace(tt, res, nt+1)
+
+
+
     t[nt] = res
     inc = (res-tt)/nt
     cdfres = 1-np.array(f_cdf1(res))
@@ -279,10 +282,13 @@ def asym_precursion(tt):
         # initialize other taylor series coefficients
         p[:, 0] = d[:, 0] - t[m]
         q[:, 0] = p[:, 0] + t[m] - 1
+        # q[:, 0] = p[:, 0] + t[m]
         y[:, 0] = q[:, 0] / p[:, 0]
-        y_plus[:, 0] = y[:, 0] + 1
+        y_plus[:, 0] = y[:, 0] + 1 #(div + 1 term)
 
-        y_plusplus[:, 0] = (t[m]-1) * (y_plus[:, 0]+1)
+        # y_plusplus[:, 0] = (t[m]-1) * (y_plus[:, 0]+1) #(w-1) term
+        y_plusplus[:, 0] = (t[m]-1) * (y_plus[:, 0]) #(w-1) term
+
         y_plusplus[:, 0] /= 2
 
         # print(d[:, 0])
@@ -420,6 +426,7 @@ def best_response():
     h = 0
     for i in range(0, n):
         kstar = np.ones(n)
+        # kstar = [2]
         kstar[i]-=1
         # print(kstar)
         slpl = np.zeros((nt+1))

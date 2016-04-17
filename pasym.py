@@ -244,6 +244,7 @@ def asym_precursion(tt):
     t = np.linspace(tt, res, nt+1)
     t[nt] = res
     inc = (res-tt)/nt
+    print(tt)
     cdfres = 1-np.array(f_cdf1(res))
     # print(cdfres)
     t[0] = tt
@@ -325,7 +326,7 @@ def asym_precursion(tt):
 
 
         m += 1
-        print(b[0,:])
+        # print(b[0,:])
         # calculate new values of l and inverse bids, and lpl
         for i in range(0, big_J+1):
 
