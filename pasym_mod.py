@@ -100,8 +100,8 @@ aa = musd[:, 0]
 bb = musd[:, 1]
 print(musd)
 # dist_list = [scipy.stats.weibull_min(musd[i, 1], scale=musd[i, 0]) for i in range(0, n)]
-dist_list = [scipy.stats.norm(musd[i, 0], scale=musd[i, 1]) for i in range(0, n)]
-# dist_list = [scipy.stats.uniform(loc=0, scale=1 ) for i in range(0,n)]
+# dist_list = [scipy.stats.norm(musd[i, 0], scale=musd[i, 1]) for i in range(0, n)]
+dist_list = [scipy.stats.uniform(loc=0, scale=1 ) for i in range(0,n)]
 
 # p1_dist = scipy.stats.weibull_min(musd[0, 0], scale=musd[0, 1])
 # p2_dist = scipy.stats.weibull_min(musd[1, 0], scale=musd[1, 1])
@@ -417,6 +417,7 @@ def asym_precursion(tt):
 
 def best_response():
     vgrid = np.zeros((nt+1))
+    vgrid = np.zeros((nt+1))
     mat1 = np.zeros((nt+1))
     mat0 = np.zeros((nt+1))
     kstar = np.zeros(n)
@@ -480,14 +481,53 @@ t = np.linspace(tstar, res, nt+1)
 
 ta = np.array([t for i in range(0, int(bigN))])
 best_response()
-
-print(bad_form.bids[:, :])
+#
+# print(bad_form.bids[:, :])
+# # plt.plot(bad_form.bids[:, :].T,ta.T)
 # plt.plot(bad_form.bids[:, :].T,ta.T)
-plt.plot(bad_form.bids[:, :].T,ta.T)
-# plt.plot(ta.T, bad_form.bids[:, :].T)
-
+# # plt.plot(ta.T, bad_form.bids[:, :].T)
+#
+# # plt.figure()
+# # plt.plot(ta.T, bad_form.bids[:, :].T)
 # plt.figure()
-# plt.plot(ta.T, bad_form.bids[:, :].T)
-plt.figure()
-plt.plot(np.linspace(lv, fires, nt-1), bad_form.brr[1::2, 1:nt].T)
+# plt.plot(np.linspace(lv, fires, nt-1), bad_form.brr[1::2, 1:nt].T)
+# plt.show()
+
+left = 0.05
+right = 1
+cost_range = np.linspace(lv, uv, nt+1)
+
+x = np.linspace(left, right, nt+1)
+bw_list = []
+y_vals = np.interp(cost_range, t, bad_form.bids[0, :])
+bz = np.where(x > t, cost_range, y_vals)
+# y_vals = np.interp(cost_range, bad_form.bids[0, :], t)
+# bz = np.where(x > bad_form.bids[0, -1], cost_range, y_vals)
+for c in cost_range:
+    EV = -(1/2) * (-1 + 2 * c - bz) *(-1 + bz) * (-1 + dist_list[0].cdf(cost_range))
+    # plt.plot(EV)
+    plt.show()
+    best_w_loc = np.argmax(EV)
+    best_w = cost_range[best_w_loc]
+    bw_list.append(best_w)
+
+plt.plot(cost_range, bw_list)
+plt.plot(cost_range, bz)
 plt.show()
+
+bz = np.array(bw_list)
+bw_list=[]
+for c in cost_range:
+    EV = -(1/2) * (-1 + 2 * c - bz) *(-1 + bz) * (-1 + dist_list[0].cdf(cost_range))
+    # plt.plot(EV)
+    plt.show()
+    best_w_loc = np.argmax(EV)
+    best_w = cost_range[best_w_loc]
+    bw_list.append(best_w)
+
+plt.plot(cost_range, bw_list)
+plt.plot(cost_range, bz)
+
+plt.show()
+
+# plt.plot(x, bz[i, :])

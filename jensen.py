@@ -450,5 +450,5 @@ for i in range(step_count):
 # print(x)
 # print(final)
 # plt.plot(x, final)
-plt.savefig('huehuehue_all.png')
+# plt.savefig('huehuehue_all.png')
 # np.savetxt('final_all.csv', [x, final], fmt='%.5f',  delimiter=',')
