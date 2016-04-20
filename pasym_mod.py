@@ -91,16 +91,17 @@ i_cdf = np.array([1, 1, 1]) # three weibull
 
 try:
     musd = np.zeros((n_cdf, 2))
-    musd[0, :] = np.array([1, 1])
-    musd[1, :] = np.array([2, 1])
+    musd[0, :] = np.array([.8, .1])
+    musd[1, :] = np.array([.7, .1])
     musd[2, :] = np.array([3.39, 2.2])
 except:
     pass
 aa = musd[:, 0]
 bb = musd[:, 1]
 print(musd)
-dist_list = [scipy.stats.weibull_min(musd[i, 1], scale=musd[i, 0]) for i in range(0, n)]
-dist_list = [scipy.stats.uniform(loc=0, scale=1) for i in range(0,n)]
+# dist_list = [scipy.stats.weibull_min(musd[i, 1], scale=musd[i, 0]) for i in range(0, n)]
+dist_list = [scipy.stats.norm(musd[i, 0], scale=musd[i, 1]) for i in range(0, n)]
+# dist_list = [scipy.stats.uniform(loc=0, scale=1 ) for i in range(0,n)]
 
 # p1_dist = scipy.stats.weibull_min(musd[0, 0], scale=musd[0, 1])
 # p2_dist = scipy.stats.weibull_min(musd[1, 0], scale=musd[1, 1])
@@ -268,6 +269,7 @@ def asym_precursion(tt):
     check = np.zeros(n)
     m = 0
     while(m <= nt-1):
+        # initilaize a
         a = np.zeros((n, big_J+1))
         a[:, 0] = l[:, m]
         # print(a[:,0])
@@ -327,14 +329,11 @@ def asym_precursion(tt):
                 # print(m,i,j,tt)
                 # if m==1:
                     # print(i,j,m,p[j,i],d[j,:],a[j,:])
-
             if i == 1:
                 p[:, i] = p[:, i] - 1
-                q[:, i] = p[:, i] + 1
-
-
-
-
+            q[:,i] = p[:, i]
+            if i == 1:
+                q[:, i] = q[:, i] + 1
 
 
 
@@ -357,7 +356,7 @@ def asym_precursion(tt):
 
             # for j in range(1, big_J+1):
             #     print(j, j-1)
-            y_plusplus[:, i] = (t[m]-1)*y[:, i] + y_plus[:, i-1]
+            y_plusplus[:, i] = (t[m]-1)*y_plus[:, i] + y_plus[:, i-1]
             y_plusplus[:, i] /= 2
             # calculate RHS of main equation
             for j in range(1, i+1):
@@ -375,16 +374,20 @@ def asym_precursion(tt):
 
         m += 1
         # print(b[0,:])
-
+        # print(t[m])
+        # print(p[0, :])
+        # print(q[0, :])
         # calculate new values of l and inverse bids, and lpl
         for i in range(0, big_J+1):
 
             l[:, m] += a[:, i] * ((-inc)**i)
             lpl[:, m] += b[:, i] * ((-inc)**i)
             bids[:, m-1] += p[:, i] * ((-inc)**i)
+            # bids[:, m-1] += q[:, i] * ((-inc)**i)
 
             # print(m,bids[0,m+1],(-inc)**i,i,p[0,i])
-
+        # for i in range(0, n):
+        #     bids[i,m-1] += 1
         # print(l[:,m],m,cdfres)
         check += np.where(l[:, m] - cdfres < 0, 1, 0)
         # print(l[:, m])
@@ -394,6 +397,7 @@ def asym_precursion(tt):
         # print(check)
         # print(l)
         # print(lpl)
+        # print(bids[0,:])
         if np.sum(check) > 0:
             # print(m)
             # print(sum(np.where(l[:, m] - cdfres < 0, 1, 0)))
@@ -436,8 +440,8 @@ def best_response():
         # print(kstar[i], t)
         for ns in range(1, nt):
             xx = vgrid[ns]
-            mat0 = (1-(t-xx)*slpl)
-
+            # mat0 = (1-(t-xx)*slpl)
+            mat0 = -1 - (1/2)*(t-1)*((xx-1)/(xx-t)+1)*slpl
             mat1 = mat0**2
             ml = np.argmin(mat1)
 
@@ -474,7 +478,7 @@ print(result.x)
 tstar = result.x[0]
 t = np.linspace(tstar, res, nt+1)
 
-ta = np.array([t for i in range(0,3)])
+ta = np.array([t for i in range(0, int(bigN))])
 best_response()
 
 print(bad_form.bids[:, :])
