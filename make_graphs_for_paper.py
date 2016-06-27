@@ -12,8 +12,10 @@ import time
 import pandas as pd
 import mpmath as mp
 import seaborn as sns
+# import matplotlib
 import matplotlib as mpl
 # mpl.rcParams['font.family'] = 'Arial'
+# matplotlib.rc('text', usetex = True)
 np.random.seed()
 sns.set_context("paper", font_scale=1.75, rc={"lines.linewidth": 2.5})
 sns.set_palette(sns.cubehelix_palette(5, reverse=True))
@@ -528,7 +530,7 @@ def reportsingle():
         ## mean units accepted ##
         #########################
         f2 = plt.figure(2)
-        plt.plot(p, nc_list, label='n='+str(n))
+        plt.plot(p, nc_list, label='n = '+str(n))
         # plt.title('Mean Number of Units Accepted')
         plt.xlabel('Price')
         plt.ylabel('Units')
@@ -577,8 +579,8 @@ def reportsingle():
         f4 = plt.figure(4)
         plt.plot(c,bf(c),label='n = '+str(n))
         # plt.title('Optimal Bid Function')
-        plt.xlabel('Cost')
-        plt.ylabel('Bid')
+        plt.xlabel(r'Cost c')
+        plt.ylabel(r'Bid w')
         # plt.show()
 
     ax = f2.gca()
@@ -997,31 +999,96 @@ def reportn2():
     f7.savefig("n_win_prob.pdf",bbox_inches='tight')
     plt.show()
 
+def diff_bounds():
+    bf = lambda c,n: np.where(c<1, 2*(1-1/(n+1))*(c-1/2)+1/(n+1), c)
+    for n in range(2, 6):
+
+        ##########################
+        ## optimal bid function ##
+        ##########################
+        c = np.linspace(0.50,1.5,num=100)
+        f4 = plt.figure(4)
+        plt.plot(c, bf(c,n),label='n = '+str(n))
+        # plt.title('Optimal Bid Function')
+        plt.xlabel('Cost')
+        plt.ylabel('Bid')
+        # plt.show()
+        ax = f4.gca()
+    handles, labels = ax.get_legend_handles_labels()
+    ax.legend(handles, labels, loc=0)
+    ax.axis([0.0, 1.5, 0, 1.5])
+    f4.savefig("n_bf_(0_1-0_15).pdf",bbox_inches='tight')
+
+
+
+    xint = [0.551942, 0.640274, 0.673991, 0.691812]
+    for n in range(2, 6):
+        ##########################
+        ## optimal bid function ##
+        ##########################
+        xi = xint[n-2]
+        bf = lambda c: np.where(c<xi,0,0.5/(1-xi)*(c-xi))
+        c = np.linspace(0,1,num=100)
+        f5 = plt.figure(5)
+        plt.plot(c, bf(c),label='n = '+str(n))
+        # plt.title('Optimal Bid Function')
+        plt.xlabel('Cost')
+        plt.ylabel('Bid')
+        # plt.show()
+        ax = f5.gca()
+    handles, labels = ax.get_legend_handles_labels()
+    ax.legend(handles, labels, loc=0)
+    ax.axis([0.0, 1, 0, 1])
+    f5.savefig("n_bf_(0_15-0_1).pdf",bbox_inches='tight')
+
+    yint = [0.404742, 0.283134, 0.219127, 0.179112]
+    for n in range(2, 6):
+        ##########################
+        ## optimal bid function ##
+        ##########################
+        yi = yint[n-2]
+        bf = lambda c:2*(1-yi)*(c-3/4) +yi
+        c = np.linspace(3/4,5/4,num=100)
+        f6 = plt.figure(6)
+        plt.plot(c, bf(c),label='n = '+str(n))
+        # plt.title('Optimal Bid Function')
+        plt.xlabel('Cost')
+        plt.ylabel('Bid')
+        # plt.show()
+        ax = f6.gca()
+    handles, labels = ax.get_legend_handles_labels()
+    ax.legend(handles, labels, loc=0)
+    ax.axis([0.0, 5/4, 0, 1.5])
+    f6.savefig("n_bf_(0_15-75_125).pdf",bbox_inches='tight')
+
+
 if __name__ == "__main__":
 
     # reportsingle()
     # reportk2()
     # reportn2()
-    # report2()
+    report2()
+    # diff_bounds()
+    #
 
-    IRM = [0.97, 0.99, 1, 1.01, 1.05]
-    LOLE = [0.4, 0.2, 0.1, 0.06, 0.009]
-    lole_calc = lambda irm: 0.1011 * np.power(irm, -49.01)
-    t = np.linspace(.965,1.055,endpoint=True)
-    d = np.vstack((LOLE,IRM)).T
-    # d[:,0] = np.log(LOLE)
-    # d[:,1] = IRM
-    print(d)
-    d = pd.DataFrame(data={'LOLE':LOLE, 'IRM':IRM})
-    print(d)
-    # sns.regplot(x="IRM", y="LOLE",data=d,logx=True)
-    plt.plot(t,lole_calc(t),label="0.1011 x^-49.01")
-    plt.plot(IRM, LOLE, '.', markersize=16)
-    plt.xlabel("IRM")
-    plt.ylabel("LOLE")
-    plt.legend()
-    plt.savefig("IRM_reg.pdf",bbox_inches='tight')
-    plt.show()
+    # IRM = [0.97, 0.99, 1, 1.01, 1.05]
+    # LOLE = [0.4, 0.2, 0.1, 0.06, 0.009]
+    # lole_calc = lambda irm: 0.1011 * np.power(irm, -49.01)
+    # t = np.linspace(.965,1.055,endpoint=True)
+    # d = np.vstack((LOLE,IRM)).T
+    # # d[:,0] = np.log(LOLE)
+    # # d[:,1] = IRM
+    # print(d)
+    # d = pd.DataFrame(data={'LOLE':LOLE, 'IRM':IRM})
+    # print(d)
+    # # sns.regplot(x="IRM", y="LOLE",data=d,logx=True)
+    # plt.plot(t,lole_calc(t),label="0.1011 x^-49.01")
+    # plt.plot(IRM, LOLE, '.', markersize=16)
+    # plt.xlabel("IRM")
+    # plt.ylabel("LOLE")
+    # plt.legend()
+    # plt.savefig("IRM_reg.pdf",bbox_inches='tight')
+    # plt.show()
 
 
     #
@@ -1039,7 +1106,7 @@ if __name__ == "__main__":
     # plt.gca().set_xticks([.1,.3,.5,.7,.9])
     # plt.gca().set_xticklabels(['0','1','2','3','4'])
     # plt.gca().set_yticks([.3,.5,.7])
-    # plt.gca().set_yticklabels(['p-2a','p-a','p'])
+    # plt.gca().set_yticklabels(['p-2α','p-α','p'])
     # plt.ylabel('Capacity Price')
     # plt.xlabel('Capacity Addition')
     # plt.savefig("curve_intersect.pdf",bbox_inches='tight')
