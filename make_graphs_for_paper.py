@@ -18,7 +18,7 @@ import matplotlib as mpl
 # matplotlib.rc('text', usetex = True)
 np.random.seed()
 sns.set_context("paper", font_scale=1.75, rc={"lines.linewidth": 2.5})
-sns.set_palette(sns.cubehelix_palette(5, reverse=True))
+sns.set_palette(sns.cubehelix_palette(5, reverse=False))
 mpl.rcParams['svg.fonttype'] = 'none'
 # sns.set(font="Arial")
 def bidf(c, n, a):
@@ -482,17 +482,19 @@ def report():
     plt.show()
 
 def reportsingle():
+    file_time = time.strftime("%Y%H%M%S")
+    sns.set_palette(sns.cubehelix_palette(5, light=0.7, reverse=False))
     bf = None
-    for n in range(2,6):
+    for n in range(2, 6):
         k = 1
-        bf = lambda c: np.where((2*n*c - (n-1))/(n+1)<0,0,(2*n*c - (n-1))/(n+1))
+        bf = lambda c: np.where((2*(n*c - (n-1)))/(n+1)<0,0,(2*(n*c - (n-1)))/(n+1))
         m_list = []
         s_list = []
         nc_list = []
         p_list = []
         op_list = []
         ab_list=[]
-        p = np.linspace(0.01, 0.99, num=100)
+        p = np.linspace(0.01, 1.99, num=200)
         for ps in p:
             m,s,nc, pp, op,ab  = simulate(ps, bf, n, k)
             m_list.append(m)
@@ -575,9 +577,9 @@ def reportsingle():
         ##########################
         ## optimal bid function ##
         ##########################
-        c = np.linspace(.001,.998,num=100)
+        c = np.linspace(.001,1.999,num=100)
         f4 = plt.figure(4)
-        plt.plot(c,bf(c),label='n = '+str(n))
+        plt.plot(c,bf(c), label='n = '+str(n))
         # plt.title('Optimal Bid Function')
         plt.xlabel(r'Cost c')
         plt.ylabel(r'Bid w')
@@ -586,21 +588,25 @@ def reportsingle():
     ax = f2.gca()
     handles, labels = ax.get_legend_handles_labels()
     ax.legend(handles, labels, loc=0)
-    ax.axis([0, 1, 0, 4])
-    f2.savefig('single_units.pdf',bbox_inches='tight')
+    ax.axis([0, 2, 0, 1])
+    f2.savefig('single_units' + file_time + '.pdf',bbox_inches='tight')
 
     ax = f4.gca()
     handles, labels = ax.get_legend_handles_labels()
+    # ax.legend(reversed(handles), reversed(labels), loc=0)
     ax.legend(handles, labels, loc=0)
-    ax.axis([0, 1, 0, 1])
-    f4.savefig("single_bf.pdf",bbox_inches='tight')
+    ax.axis([0, 2, 0, 2])
+    f4.savefig("single_bf" + file_time + ".pdf",bbox_inches='tight', clip_on=False)
 
     ax = f7.gca()
     handles, labels = ax.get_legend_handles_labels()
     ax.legend(handles, labels, loc=0)
-    ax.axis([0, 1, 0, 1])
-    f7.savefig("single_win_prob.pdf",bbox_inches='tight')
+    ax.axis([0, 1, 0, 2])
+    f7.savefig("single_win_prob" + file_time + ".pdf",bbox_inches='tight')
     plt.show()
+
+
+
 def reportn():
     bf = None
     for n in range(3,6):
@@ -1064,10 +1070,30 @@ def diff_bounds():
 
 if __name__ == "__main__":
 
-    # reportsingle()
+    reportsingle()
     # reportk2()
     # reportn2()
-    report2()
+    # report2()
+    #
+    # IRM = [0.97, 0.99, 1, 1.01, 1.05]
+    # LOLE = [0.4, 0.2, 0.1, 0.06, 0.009]
+    # lole_calc = lambda irm: 0.1011 * np.power(irm, -49.01)
+    # t = np.linspace(.965,1.055,endpoint=True)
+    # d = np.vstack((LOLE,IRM)).T
+    # # d[:,0] = np.log(LOLE)
+    # # d[:,1] = IRM
+    # print(d)
+    # d = pd.DataFrame(data={'LOLE':LOLE, 'IRM':IRM})
+    # print(d)
+    # # sns.regplot(x="IRM", y="LOLE",data=d,logx=True)
+    # plt.plot(t,lole_calc(t),label="0.1011 x^-49.01")
+    # plt.plot(IRM, LOLE, '.', markersize=16)
+    # plt.xlabel("IRM")
+    # plt.ylabel("LOLE")
+    # plt.legend()
+    # plt.savefig("IRM_reg.pdf",bbox_inches='tight')
+    # plt.show()
+
     # diff_bounds()
     #
 
