@@ -161,7 +161,93 @@ def simulate(ps, f ,n,k):
     # probability that you won 2s
     # print(np.mean(mask2))
 
+def simulate_compare(ps, own_bf, f ,n,k):
+    M = 100000
 
+
+    # own_idx = np.random.random_integers(0,n-1,size=(M,1))
+    # generate random bids
+    costs = 2*np.random.rand(M, n)
+    lex = np.random.rand(M,n)
+
+    bids = np.zeros((M,n))
+    lb = 0.01
+    ub = 1.98
+    costs[costs < lb] = lb
+    costs[costs > ub] = ub
+    bids[:,0] = own_bf(costs[:, 0])
+
+    bids[:,1:] = f(costs[:, 1:])
+    # print(lex)
+    sorted_owners = np.lexsort((lex, bids),axis=1)
+    # sorted_owners = np.argsort(bids, axis=1)
+    # print(bids)
+    # print(sorted_owners)
+    # sorted_costs = np.sort(costs, axis=1)
+    sorted_bids = np.sort(bids, axis=1)
+    # print(sorted_bids)
+    # raw_input()
+
+    p = np.array(k*[ps]+(n-k)*[-1])
+
+    # p = np.where(p<0,0,p)
+    # print(p)
+    # set player 1 bids to something fixed.
+    # bids[:, 0] = .75
+    # print(bids)
+    # return bidder #s in order
+    # sorted_bid_owners = np.argsort(bids, axis=1)
+    # sorted_bids = np.sort(bids, axis=1)
+    # print(sorted_bids)
+    # print(sorted_bid_owners)
+    # true if the xth unit of supply is less than xth unit of demand
+    p_clearing = sorted_bids <= p
+    # print(p_clearing)
+
+    # count number of units that clear
+    num_clearing = np.sum(p_clearing, axis=1)
+    # print(num_clearing)
+
+    # get position of your bid (1st, 2nd, 3rd) comes out as 0, 1, 2
+    # ind = np.where(sorted_owners == own_idx)
+    ind = np.where(sorted_owners == 0)
+    # print(ind)
+
+    # whether or not you were in the cheapest bids list, so if you were cheapest, ind was 0
+    # and you would clear as long as a price cleared. return which price you received (1, 2, 3 or 4)
+    mask = np.where(num_clearing > ind[1], num_clearing, 0)
+    # print(mask)
+
+    q = np.arange(0,M,dtype=int)
+    # print(sorted_bids[q, num_clearing])
+    #overpayment
+    op = np.mean((num_clearing>0)*(p[num_clearing-1]-sorted_bids[q,num_clearing-1]))
+
+    # find where you received 2s
+    mask2 = mask == 2
+    # find where you received any price
+    maskany = mask > 0
+    # print(np.mean(maskany))
+
+
+    # retrun  m, s, nc, pp, op, ab
+    # return np.mean(maskany), np.mean(maskany * (p[num_clearing-1]-costs[:,0]), axis=0), np.mean(num_clearing), np.mean((num_clearing>0) * p[num_clearing-1]),op, np.mean((num_clearing >0)*sorted_bids[:, 0])
+
+    data = Foo()
+    data.win_prob = np.mean(maskany)
+    data.avg_profit = np.mean(maskany * (p[num_clearing-1]-costs[:, 0]), axis=0)
+    data.num_clearing = np.mean(num_clearing)
+    data.avg_clearing_price = np.mean((num_clearing > 0) * p[num_clearing-1])
+    data.avg_lowest_bid = np.mean((num_clearing > 0)*sorted_bids[:, 0])
+    # retrun  m, s, nc, pp, op, ab
+    return data
+
+    # return np.mean(maskany), np.mean(sorted_bids, axis=0), np.mean(num_clearing)
+
+    # print(sum(mask)/M)r
+
+    # probability that you won 2s
+    # print(np.mean(mask2))
 def run():
     bf = None
 
@@ -189,6 +275,35 @@ def run():
     plt.plot(ps, d1_list)
     plt.plot(ps, d2_list)
     plt.show()
+def run_compare():
+    bf = None
 
+
+    n = 6
+    k = 4
+    z = np.genfromtxt("n6k4.csv",delimiter=',')
+    bf = interp1d(z[:,0],z[:,1])
+
+    ps = np.linspace(.01, 1.98)
+    # plt.plot(ps, bf(ps))
+    d1_list = []
+    d2_list = []
+    np.random.seed(10)
+    i = 1
+    for p in ps:
+        np.random.seed(i)
+        d1 = simulate_compare(p, bf, lambda x: x ,n,k)
+        d1_list.append(d1.avg_profit)
+        np.random.seed(i)
+        d2 = simulate_compare(p, lambda x: x, lambda x: x, n, k)
+        d2_list.append(d2.avg_profit)
+        i+=1
+    # print(d1.avg_profit)
+    # print(d2.avg_profit)
+    plt.plot(ps, d1_list)
+    plt.plot(ps, d2_list)
+    print(np.mean(d1_list)-np.mean(d2_list))
+    plt.show()
 if __name__ == "__main__":
-    run()
+    # run()
+    run_compare()
